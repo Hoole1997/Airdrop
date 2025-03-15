@@ -24,9 +24,9 @@ class App : Application() {
         Utils.init(this)
         NetConfig.initialize("", this) {
             // 超时配置, 默认是10秒, 设置太长时间会导致用户等待过久
-            connectTimeout(300, TimeUnit.SECONDS)
-            readTimeout(300, TimeUnit.SECONDS)
-            writeTimeout(300, TimeUnit.SECONDS)
+            connectTimeout(30, TimeUnit.SECONDS)
+            readTimeout(30, TimeUnit.SECONDS)
+            writeTimeout(30, TimeUnit.SECONDS)
             addInterceptor(
                 LoggingInterceptor.Builder()
                 .setLevel(Level.BASIC)
