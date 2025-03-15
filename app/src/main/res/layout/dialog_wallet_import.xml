@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/bg_wallet_import">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_margin="10dp"
+            android:layout_weight="1">
+
+            <EditText
+                android:id="@+id/et_input"
+                android:hint="导入格式 \n\n [ \n {\n ''chain'':''ETH'',\n''address'':''0xab...'',\n''privateKey'':''...'',\n''alias'':'' '',\n''proxy'':''account:password@ip:port''\n},\n{\n ''chain'':''ETH'',\n''address'':''0xab...'',\n''privateKey'':''...'',\n''alias'':'' '',\n''proxy'':''account:password@ip:port''\n}\n...\n]"
+                android:padding="10dp"
+                android:textSize="12sp"
+                android:gravity="start"
+                android:background="@drawable/bg_wallet_import_edit"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </androidx.core.widget.NestedScrollView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_file_import"
+            android:text="文件导入"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_import"
+            android:text="导入"
+            android:layout_margin="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+</layout>

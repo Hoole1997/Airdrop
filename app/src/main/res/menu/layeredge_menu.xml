@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_layeredge_sort_register"
+        android:title="注册排序"/>
+    <item
+        android:id="@+id/menu_layeredge_register"
+        android:title="一键注册"/>
+    <item android:id="@+id/menu_layeredge_refresh_info"
+        android:title="全部刷新"/>
+    <item android:id="@+id/menu_layeredge_refresh_node"
+        android:title="刷新节点状态"/>
+    <item android:id="@+id/menu_layeredge_node_start"
+        android:title="开启节点"/>
+    <item android:id="@+id/menu_layeredge_sign"
+        android:title="一键签到"/>
+</menu>

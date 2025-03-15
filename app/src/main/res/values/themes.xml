@@ -1,0 +1,15 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Airdrop" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+<!--         <item name="colorPrimary">@color/my_light_primary</item>-->
+    </style>
+
+    <style name="Theme.Airdrop" parent="Base.Theme.Airdrop" />
+    <style name="Theme.Airdrop.Main" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- 设置状态栏颜色 -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+<!--        <item name="statusBarColor">@color/colorPrimaryDark</item> &lt;!&ndash; 对于 API 21 及以上 &ndash;&gt;-->
+        <item name="colorPrimaryVariant">@color/black</item> <!-- 状态栏颜色 -->
+    </style>
+</resources>
