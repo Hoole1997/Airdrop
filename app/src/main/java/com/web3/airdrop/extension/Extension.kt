@@ -16,7 +16,17 @@ object Extension {
         return digest.digest(input)
     }
 
-
+    fun String.formatAddress(): String {
+        // 检查字符串长度是否满足要求
+        return if (this.length >= 12) {
+            // 截取前6和后6个字符
+            val prefix = this.substring(0, 6)
+            val suffix = this.substring(this.length - 6)
+            "$prefix...$suffix" // 用省略号连接
+        } else {
+            this // 如果地址长度小于12，返回原始字符串
+        }
+    }
 
 }
 

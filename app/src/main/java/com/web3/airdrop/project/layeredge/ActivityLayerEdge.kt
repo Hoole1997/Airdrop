@@ -99,6 +99,7 @@ class ActivityLayerEdge : BaseActivity<ActivityLayerEdgeBinding, LayerEdgeModel>
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_layeredge_sign -> {
+                model.signEveryDay()
                 true
             }
             R.id.menu_layeredge_register -> {

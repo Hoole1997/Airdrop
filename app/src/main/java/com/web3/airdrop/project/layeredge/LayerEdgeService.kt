@@ -8,19 +8,23 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.UiMessageUtils
 import com.drake.net.Get
 import com.drake.net.Post
 import com.drake.net.utils.scopeNet
 import com.web3.airdrop.R
+import com.web3.airdrop.extension.Extension.formatAddress
 import com.web3.airdrop.extension.Web3Utils
 import com.web3.airdrop.extension.setProxy
 import com.web3.airdrop.project.log.LogData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import okhttp3.Headers
 import okhttp3.Response
 import org.json.JSONObject
+import kotlin.random.Random
 
 class LayerEdgeService : Service() {
 
@@ -211,6 +215,49 @@ class LayerEdgeService : Service() {
             if (it.`object` is LayerEdgeAccountInfo) {
                 val info = it.`object` as LayerEdgeAccountInfo
                 connectNode(info)
+            }
+        }
+        UiMessageUtils.getInstance().addListener(LayerEdgeCommand.MESSAGE_SIGN_EVERYDAY) {
+            val list = it.`object` as List<LayerEdgeAccountInfo>
+            sign(list)
+        }
+    }
+
+    private fun sign(list: List<LayerEdgeAccountInfo>) {
+        scopeNet {
+            list.forEachIndexed { index,accountInfo ->
+                val delayTime = Random.nextLong(10,30)
+                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet.id,
+                    "${accountInfo.wallet.address.formatAddress()} ${index}/${list.size} 下一个等待 ${delayTime} 秒"))
+                val timestamp = System.currentTimeMillis()
+                val message = "I am claiming my daily node point for ${accountInfo.wallet.address} at ${timestamp}"
+                val sign = Web3Utils.signPrefixedMessage(message,accountInfo.wallet.privateKey)
+                val response = Post<Response>("https://referralapi.layeredge.io/api/light-node/claim-node-points") {
+                    json(
+                        "sign" to sign,
+                        "timestamp" to timestamp,
+                        "walletAddress" to accountInfo.wallet.address
+                    )
+                    setHeaders(headers)
+                    setClient {
+                        setProxy(accountInfo.wallet.proxy)
+                    }
+                    converter = LayerEdgeConvert()
+                }.await()
+                JSONObject(response.body?.string()).let {
+                    val statusCode = it.optInt("statusCode")
+                    val message = it.optString("message")
+                    val data = it.optJSONObject("data")
+                    if (statusCode == 0) {
+                        LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,accountInfo.wallet.id,
+                            "${accountInfo.wallet.address.formatAddress()} 签到成功"))
+                    } else {
+                        LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,accountInfo.wallet.id,
+                            "${accountInfo.wallet.address.formatAddress()} $message"))
+                    }
+                }
+
+                delay(delayTime*1000)
             }
         }
     }

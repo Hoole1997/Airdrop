@@ -12,6 +12,7 @@ object LayerEdgeCommand {
     const val MESSAGE_REGISTER_ACCOUNT = 104
     const val MESSAGE_REFRESH_NODE_STATE = 105
     const val MESSAGE_CONNECT_NODE = 106
+    const val MESSAGE_SIGN_EVERYDAY = 107
 
     fun requestAccountInfo(accountInfo: LayerEdgeAccountInfo) {
         UiMessageUtils.getInstance().send(MESSAGE_REQUEST_ACCOUNT,accountInfo)
@@ -35,6 +36,10 @@ object LayerEdgeCommand {
 
     fun connectNode(accountInfo: LayerEdgeAccountInfo) {
         UiMessageUtils.getInstance().send(MESSAGE_CONNECT_NODE,accountInfo)
+    }
+
+    fun signEveryDay(accountList: List<LayerEdgeAccountInfo>) {
+        UiMessageUtils.getInstance().send(MESSAGE_SIGN_EVERYDAY,accountList)
     }
 
 }

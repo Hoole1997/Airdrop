@@ -8,5 +8,6 @@ data class LayerEdgeAccountInfo(
     var taskPoints: Int,
     var isRegister: Boolean = false,
     var layerEdgeId: String? = null,
-    var nodeStart: Boolean = false
+    var nodeStart: Boolean = false,
+    var isSign: Boolean = false
 )

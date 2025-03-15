@@ -80,4 +80,14 @@ class LayerEdgeModel : ViewModel() {
         }
     }
 
+    fun signEveryDay() {
+        viewModelScope.launch {
+            walletAccountEvent.value?.shuffled()?.filter {
+                !it.isSign
+            }?.let {
+                LayerEdgeCommand.signEveryDay(it)
+            }
+        }
+    }
+
 }
