@@ -195,9 +195,9 @@ class LayerEdgeService : Service() {
     }
 
     private fun connectNode(infoList: List<LayerEdgeAccountInfo>,connect: Boolean) {
-        scopeNet {
+        scopeNet(Dispatchers.IO) {
             infoList.forEachIndexed { index,info ->
-                val delayTime = Random.nextLong(10,30)
+                val delayTime = Random.nextLong(2,10)
                 try {
                     val timestamp = System.currentTimeMillis()
                     LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet?.id,
@@ -228,7 +228,7 @@ class LayerEdgeService : Service() {
                         val startTimestamp = data.optLong("startTimestamp")
                         info.startTimestamp = startTimestamp
                         LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet?.id,
-                            "${if (connect) "连接" else "断开"}成功 ${info.wallet?.address} ${index}/${infoList.size} delayTime = $delayTime s"))
+                            "${if (connect) "连接" else "断开"}成功 ${info.wallet?.address?.formatAddress()} ${index}/${infoList.size} delayTime = $delayTime s"))
                         if (info.id.isNotEmpty()) {
                             info.startTimestamp = startTimestamp
                             info.lastSyncTime = System.currentTimeMillis()
@@ -237,11 +237,11 @@ class LayerEdgeService : Service() {
                         }
                     } else {
                         LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,info.wallet?.id,
-                            "连接失败 ${info.wallet?.address} ${index}/${infoList.size} delayTime = $delayTime s"))
+                            "${if (connect) "连接" else "断开"}失败 ${info.wallet?.address?.formatAddress()} ${index}/${infoList.size} delayTime = $delayTime s"))
                     }
                 }catch (e: Exception) {
                     LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,info.wallet?.id,
-                        "连接失败 ${info.wallet?.address} exception:${e.message} ${index}/${infoList.size} delayTime = $delayTime s"))
+                        "${if (connect) "连接" else "断开"}失败 ${info.wallet?.address?.formatAddress()} exception:${e.message} ${index}/${infoList.size} delayTime = $delayTime s"))
                 }
                 delay(delayTime*1000)
             }
@@ -285,7 +285,7 @@ class LayerEdgeService : Service() {
                 val delayTime = Random.nextLong(10,30)
                 try {
                     LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet?.id,
-                        "${accountInfo.wallet?.address?.formatAddress()} ${index}/${list.size}"))
+                        "签到 ${accountInfo.wallet?.address?.formatAddress()} ${index}/${list.size}"))
                     val timestamp = System.currentTimeMillis()
                     val message = "I am claiming my daily node point for ${accountInfo.wallet?.address} at ${timestamp}"
                     val sign = Web3Utils.signPrefixedMessage(message,accountInfo.wallet?.privateKey)
@@ -313,7 +313,7 @@ class LayerEdgeService : Service() {
                         }
                     }
                 }catch (e: Exception) {
-                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet?.id,
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,accountInfo.wallet?.id,
                         e.message.toString() +"${index}/${list.size} delayTime:$delayTime"
                     ))
                 }

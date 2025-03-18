@@ -41,6 +41,7 @@ class FragmentLayerEdgeAccount : BaseFragment<FragmentLayeredgeAccountBinding, L
             accountAdapter.items.forEachIndexed { index,item ->
                 if (item.wallet?.address == account.wallet?.address) {
                     accountAdapter.set(index,account)
+                    accountAdapter.notifyItemChanged(index)
                 }
             }
         }

@@ -78,7 +78,7 @@ class LayerEdgeModel : ViewModel() {
     fun connectNode(connect: Boolean) {
         viewModelScope.launch {
             walletAccountEvent.value?.shuffled()?.filter {
-                !it.nodeStart
+                if (connect) !it.nodeStart else it.nodeStart
             }?.let {
                 LayerEdgeCommand.connectNode(it,connect)
             }
