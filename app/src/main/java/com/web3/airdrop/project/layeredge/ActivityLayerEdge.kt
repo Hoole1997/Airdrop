@@ -14,6 +14,7 @@ import com.blankj.utilcode.util.UiMessageUtils
 import com.google.android.material.tabs.TabLayoutMediator
 import com.web3.airdrop.R
 import com.web3.airdrop.base.BaseActivity
+import com.web3.airdrop.data.AppDatabase
 import com.web3.airdrop.databinding.ActivityLayerEdgeBinding
 import com.web3.airdrop.project.log.LogViewModel
 
@@ -53,41 +54,13 @@ class ActivityLayerEdge : BaseActivity<ActivityLayerEdgeBinding, LayerEdgeModel>
         startTask()
         model.refreshLocalWallet()
         model.walletAccountEvent.observe(this) {
-            binding.tvRegisterAccount.text = "0/${it.size}"
+            val registerCount = it.count { it.isRegister }
+            binding.tvRegisterAccount.text = "$registerCount / ${model.walletAccountEvent.value?.size}"
         }
-
-        var onlineCount = 0
-        var countNodePoint = 0
-        var countTaskPoint = 0
-        UiMessageUtils.getInstance().addListener(LayerEdgeCommand.MESSAGE_REFRESH_ACCOUNT) {
-            val account = it.`object` as LayerEdgeAccountInfo
-            var count = model.walletAccountEvent.value?.size ?:0
-            val list = model.walletAccountEvent.value?:arrayListOf()
-            list.let { list ->
-                list.forEachIndexed { index,data ->
-                    if (account.wallet.address == data.wallet.address) {
-                        list.set(index,account)
-                        if (account.isRegister) {
-                            onlineCount++
-                            countNodePoint = countNodePoint+account.nodePoints
-                            countTaskPoint = countTaskPoint+account.taskPoints
-                        }
-                    } else {
-                        if (data.isRegister) {
-                            onlineCount++
-                            countNodePoint = data.nodePoints+account.nodePoints
-                            countTaskPoint = data.taskPoints+account.taskPoints
-                        }
-                    }
-                }
-                count = list.size
-                binding.tvRegisterAccount.text = "$onlineCount / $count"
-                binding.tvCountNodePoint.text = "$countNodePoint"
-                binding.tvCountTaskPoint.text = "$countTaskPoint"
-                model.walletAccountEvent.postValue(list)
-            }
+        AppDatabase.getDatabase().layeredgeDao().getAccountList().observe(this) {
+            val registerCount = it.count { it.isRegister }
+            binding.tvRegisterAccount.text = "$registerCount / ${model.walletAccountEvent.value?.size}"
         }
-
         logViewModel.registerLogListener(LayerEdgeCommand.MESSAGE_LAYEREDGE_LOG)
     }
 
@@ -107,7 +80,11 @@ class ActivityLayerEdge : BaseActivity<ActivityLayerEdgeBinding, LayerEdgeModel>
                 true
             }
             R.id.menu_layeredge_node_start -> {
-                model.connectNode()
+                model.connectNode(true)
+                true
+            }
+            R.id.menu_layeredge_node_stop -> {
+                model.connectNode(false)
                 true
             }
             R.id.menu_layeredge_refresh_info -> {

@@ -8,24 +8,25 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.blankj.utilcode.util.LogUtils
+import com.blankj.utilcode.util.GsonUtils
 import com.blankj.utilcode.util.UiMessageUtils
 import com.drake.net.Get
 import com.drake.net.Post
 import com.drake.net.utils.scopeNet
 import com.web3.airdrop.R
-import com.web3.airdrop.extension.Extension
+import com.web3.airdrop.data.AppDatabase
 import com.web3.airdrop.extension.Extension.formatAddress
 import com.web3.airdrop.extension.Web3Utils
 import com.web3.airdrop.extension.setProxy
+import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 import com.web3.airdrop.project.log.LogData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.job
 import okhttp3.Headers
 import okhttp3.Response
 import org.json.JSONObject
 import kotlin.random.Random
+import kotlin.text.isEmpty
 
 class LayerEdgeService : Service() {
 
@@ -46,133 +47,203 @@ class LayerEdgeService : Service() {
         return START_STICKY
     }
 
-    private fun refreshAccount(info: LayerEdgeAccountInfo) {
+    private fun registerCommand() {
+        UiMessageUtils.getInstance().addListener {
+            when(it.id) {
+                LayerEdgeCommand.MESSAGE_REQUEST_ACCOUNT -> {
+                    val infoList = it.`object` as List<LayerEdgeAccountInfo>
+                    refreshAccount(infoList)
+                }
+                LayerEdgeCommand.MESSAGE_REGISTER_ACCOUNT -> {
+                    val infoList = it.`object` as List<LayerEdgeAccountInfo>
+                    registerAccount(infoList)
+                }
+                LayerEdgeCommand.MESSAGE_CONNECT_NODE -> {
+                    val infoList = it.`object` as List<LayerEdgeAccountInfo>
+                    connectNode(infoList,true)
+                }
+                LayerEdgeCommand.MESSAGE_DISCONNECT_NODE -> {
+                    val infoList = it.`object` as List<LayerEdgeAccountInfo>
+                    connectNode(infoList,false)
+                }
+                LayerEdgeCommand.MESSAGE_SIGN_EVERYDAY -> {
+                    val infoList = it.`object` as List<LayerEdgeAccountInfo>
+                    sign(infoList)
+                }
+            }
+        }
+    }
+
+    private fun refreshAccount(infoList: List<LayerEdgeAccountInfo>) {
         //https://api.ipify.org/
         scopeNet(Dispatchers.IO) {
-            val detailResponse = Get<Response>("https://referralapi.layeredge.io/api/referral/wallet-details/${info.wallet.address}") {
-                setHeaders(headers)
-                setClient {
-                    setProxy(info.wallet.proxy)
+            infoList.forEachIndexed { index,info ->
+                val delayTime = Random.nextLong(1,5)
+                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet?.id,
+                    "请求用户信息 _id=${info.wallet?.address?.formatAddress()} ${index}/${infoList.size}  delayTime:$delayTime s"))
+                try {
+                    val detailResponse = Get<Response>("https://referralapi.layeredge.io/api/referral/wallet-details/${info.wallet?.address}") {
+                        setHeaders(headers)
+                        setClient {
+                            setProxy(info.wallet?.proxy.toString())
+                        }
+                        converter = LayerEdgeConvert()
+                    }.await()
+
+                    val nodeStatusResponse = Get<Response>("https://referralapi.layeredge.io/api/light-node/node-status/${info.wallet?.address}"){
+                        setHeaders(headers)
+                        setClient {
+                            setProxy(info.wallet?.proxy.toString())
+                        }
+                        converter = LayerEdgeConvert()
+                    }.await()
+
+                    val datailResult = JSONObject(detailResponse.body?.string())
+                    datailResult.optString("data","").let {
+                        if (it.isEmpty()) return@let
+                        val accountInfo = GsonUtils.fromJson<LayerEdgeAccountInfo>(it,
+                            LayerEdgeAccountInfo::class.java)
+
+                        val nodeResult = JSONObject(nodeStatusResponse.body?.string())
+                        val nodeData = nodeResult.optJSONObject("data")
+                        if (nodeData != null) {
+                            accountInfo.startTimestamp = nodeData.optLong("startTimestamp")
+                        }
+                        accountInfo.lastSyncTime = System.currentTimeMillis()
+                        if (!accountInfo.isRegister) {
+                            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.WARN,info.wallet?.id,"未注册 ${index}/${infoList.size} delayTime:$delayTime s"))
+                        } else {
+                            AppDatabase.getDatabase().layeredgeDao().insertOrUpdate(accountInfo)
+                            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet?.id,
+                                "同步用户信息成功 _id=${accountInfo.id} ${index}/${infoList.size} delayTime:$delayTime s"))
+                            LayerEdgeCommand.requestAccountResult(accountInfo)
+                        }
+                    }
+                }catch (e: Exception) {
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.WARN,info.wallet?.id,"同步用户信息失败 exception:${e.message} ${index}/${infoList.size} delayTime:$delayTime s"))
                 }
-                converter = LayerEdgeConvert()
-            }.await()
-            val datailResult = JSONObject(detailResponse.body?.string())
-            val statusCode = datailResult.optInt("statusCode")
-            //未注册
-            info.isRegister = statusCode != 404
-            if (!info.isRegister) {
-                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.WARN,info.wallet.id,"未注册"))
-            } else {
-                val data = datailResult.optJSONObject("data") ?:return@scopeNet
-                info.layerEdgeId = data.optString("_id")
-                info.nodePoints = data.optInt("nodePoints")
-                info.taskPoints = data.optInt("rewardPoints")
-                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet.id,
-                    "已注册 _id=${info.layerEdgeId}  "))
+                delay(delayTime*1000)
             }
-            LayerEdgeCommand.refreshAccountInfo(info)
         }
     }
 
-    private fun refreshNodeState(info: LayerEdgeAccountInfo) {
-        scopeNet {
-            val nodeStatusResponse = Get<Response>("https://referralapi.layeredge.io/api/light-node/node-status/${info.wallet.address}"){
-                setHeaders(headers)
-                setClient {
-                    setProxy(info.wallet.proxy)
-                }
-                converter = LayerEdgeConvert()
-            }.await()
-            val nodeResult = JSONObject(nodeStatusResponse.body?.string())
-            val nodeData = nodeResult.optJSONObject("data")
-            if (nodeData != null) {
-                info.nodeStart = nodeData.optLong("startTimestamp") > 0L
-                if (info.nodeStart) {
-                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet.id,
-                        nodeResult.toString()))
-                } else {
-                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet.id,
-                        nodeResult.toString()))
-                }
-            }
-            LayerEdgeCommand.refreshAccountInfo(info)
-            //https://referralapi.layeredge.io/api/light-node/node-status/
-        }
-    }
-
-    private fun registerAccount(info: LayerEdgeAccountInfo) {
-        if (info.wallet.address.isNullOrBlank()) return
+    private fun registerAccount(infoList: List<LayerEdgeAccountInfo>) {
         val refCode = "S3RiufC8"
         scopeNet {
-            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet.id,
-                "开始注册 ${info.wallet.address} 校验邀请码"))
-            val verifyResponse = Post<Response>("https://referralapi.layeredge.io/api/referral/verify-referral-code") {
-                param("invite_code",refCode)
-                json("invite_code" to refCode)
-                setHeaders(headers)
-                setClient {
-                    setProxy(info.wallet.proxy)
+            infoList.forEachIndexed { index,info ->
+                val delayTime = Random.nextLong(10,30)
+                try {
+                    if (info.wallet?.address.isNullOrBlank()) return@forEachIndexed
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet?.id,
+                        "开始注册 ${info.wallet?.address?.formatAddress()} 校验邀请码 ${index}/${infoList.size}"))
+                    val verifyResponse = Post<Response>("https://referralapi.layeredge.io/api/referral/verify-referral-code") {
+                        param("invite_code",refCode)
+                        json("invite_code" to refCode)
+                        setHeaders(headers)
+                        setClient {
+                            setProxy(info.wallet?.proxy)
+                        }
+                        converter = LayerEdgeConvert()
+                    }.await()
+                    val verifyResult = JSONObject(verifyResponse.body?.string())
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet?.id,
+                        "${info.wallet?.address?.formatAddress()} result = ${verifyResult}"))
+                    val data = verifyResult.optJSONObject("data")
+                    val message = verifyResult.optString("message")
+                    if (data == null) {
+                        LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,info.wallet?.id,
+                            "${info.wallet?.address?.formatAddress()} 注册失败 $message ${index}/${infoList.size} delay:$delayTime s"))
+                        return@scopeNet
+                    }
+                    Post<Response>("https://referralapi.layeredge.io/api/referral/register-wallet/$refCode"){
+                        param("walletAddress",info.wallet?.address)
+                        json("walletAddress" to info.wallet?.address)
+                        setHeaders(headers)
+                        setClient {
+                            setProxy(info.wallet?.proxy)
+                        }
+                        converter = LayerEdgeConvert()
+                    }.await()?.let { response ->
+                        val code = response.code
+                        val result = JSONObject(response.body?.string())
+                        val data = result.optString("data")
+
+                        data?.let {
+                            if (data.isEmpty())return@let
+                            val accountInfo = GsonUtils.fromJson<LayerEdgeAccountInfo>(it,
+                                LayerEdgeAccountInfo::class.java)
+                            accountInfo.lastSyncTime = System.currentTimeMillis()
+                            if (!info.isRegister) {
+                                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.WARN,info.wallet?.id,"未注册 delayTime:$delayTime s"))
+                            } else {
+                                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet?.id,
+                                    "同步用户信息成功 _id=${accountInfo.id}  delayTime:$delayTime s"))
+                                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet?.id,
+                                    "注册成功 ${info.wallet?.address?.formatAddress()} _id = ${accountInfo.id} ${index}/${infoList.size} delay:$delayTime s"))
+                                AppDatabase.getDatabase().layeredgeDao().insertOrUpdate(accountInfo)
+                                LayerEdgeCommand.requestAccountResult(accountInfo)
+                            }
+                        }
+                    }
+                }catch (e: Exception) {
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,info.wallet?.id,
+                        "${info.wallet?.address?.formatAddress()} 注册失败 ${e.message} ${index}/${infoList.size} delay:$delayTime s" ))
                 }
-                converter = LayerEdgeConvert()
-            }.await()
-            val code = verifyResponse.code
-            val verifyResult = JSONObject(verifyResponse.body?.string())
-            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet.id,
-                "${info.wallet.address} result = ${verifyResult}"))
-            val data = verifyResult.optJSONObject("data")
-            val message = verifyResult.optString("message")
-            if (data == null) {
-                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,info.wallet.id,
-                    "${info.wallet.address} 注册失败 $message"))
-                return@scopeNet
-            }
-            delay(2000)
-            Post<Response>("https://referralapi.layeredge.io/api/referral/register-wallet/$refCode"){
-                param("walletAddress",info.wallet.address)
-                json("walletAddress" to info.wallet.address)
-                setHeaders(headers)
-                setClient {
-                    setProxy(info.wallet.proxy)
-                }
-                converter = LayerEdgeConvert()
-            }.await()?.let { response ->
-                val code = response.code
-                val result = JSONObject(response.body?.string())
-                val data = result.optJSONObject("data")
-                if (data != null) {
-                    val _id = data.optString("id")
-                    info.layerEdgeId = _id
-                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet.id,
-                        "注册成功 ${info.wallet.address} _id = ${info.layerEdgeId}"))
-                }
+                delay(delayTime*1000)
             }
         }
     }
 
-    private fun connectNode(info: LayerEdgeAccountInfo) {
+    private fun connectNode(infoList: List<LayerEdgeAccountInfo>,connect: Boolean) {
         scopeNet {
-            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet.id,
-                "连接节点 ${info.wallet.address}"))
+            infoList.forEachIndexed { index,info ->
+                val delayTime = Random.nextLong(10,30)
+                try {
+                    val timestamp = System.currentTimeMillis()
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,info.wallet?.id,
+                        "${if (connect) "连接" else "断开"}节点 ${info.wallet?.address?.formatAddress()} ${index}/${infoList.size} $timestamp"))
+                    // 要签名的信息
+                    //Node activation request for 0x99de99385C41b0FA7AE9df5c068399E7082276F1 at 1742309571657
+                    //断开
+                    //Node deactivation request for 0x99de99385C41b0FA7AE9df5c068399E7082276F1 at 1742311562836
+                    val message = if (connect) {
+                        "Node activation request for ${info.wallet?.address} at ${timestamp}"
+                    } else {
+                        "Node deactivation request for ${info.wallet?.address} at ${timestamp}"
+                    }
+                    val sign = Web3Utils.signPrefixedMessage(message,info.wallet?.privateKey)
 
-            // 要签名的信息
-            val timestamp = System.currentTimeMillis()
-            val message = "Node activation request for ${info.wallet.address} at ${timestamp}"
-            val sign = Web3Utils.signPrefixedMessage(message,info.wallet.privateKey)
+                    val response = Post<Response>("https://referralapi.layeredge.io/api/light-node/node-action/${info.wallet?.address}/${if (connect) "start" else "stop"}") {
+                        json("sign" to sign,"timestamp" to timestamp)
+                        setHeaders(headers)
+                        setClient {
+                            setProxy(info.wallet?.proxy)
+                        }
+                        converter = LayerEdgeConvert()
+                    }.await()
 
-            val response = Post<Response>("https://referralapi.layeredge.io/api/light-node/node-action/${info.wallet.address}/start") {
-                json("sign" to sign,"timestamp" to timestamp)
-                setHeaders(headers)
-                setClient {
-                    setProxy(info.wallet.proxy)
+                    val result = JSONObject(response.body?.string())
+                    val data = result.optJSONObject("data")
+                    if (data != null) {
+                        val startTimestamp = data.optLong("startTimestamp")
+                        info.startTimestamp = startTimestamp
+                        LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet?.id,
+                            "${if (connect) "连接" else "断开"}成功 ${info.wallet?.address} ${index}/${infoList.size} delayTime = $delayTime s"))
+                        if (info.id.isNotEmpty()) {
+                            info.startTimestamp = startTimestamp
+                            info.lastSyncTime = System.currentTimeMillis()
+                            AppDatabase.getDatabase().layeredgeDao().insertOrUpdate(info)
+                            LayerEdgeCommand.requestAccountResult(info)
+                        }
+                    } else {
+                        LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,info.wallet?.id,
+                            "连接失败 ${info.wallet?.address} ${index}/${infoList.size} delayTime = $delayTime s"))
+                    }
+                }catch (e: Exception) {
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,info.wallet?.id,
+                        "连接失败 ${info.wallet?.address} exception:${e.message} ${index}/${infoList.size} delayTime = $delayTime s"))
                 }
-                converter = LayerEdgeConvert()
-            }.await()
-
-            val result = JSONObject(response.body?.string())
-            val data = result.optJSONObject("data")
-            if (data != null && data.optLong("startTimestamp") > 0L) {
-                LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,info.wallet.id,
-                    "连接成功 ${info.wallet.address}"))
+                delay(delayTime*1000)
             }
         }
     }
@@ -191,38 +262,6 @@ class LayerEdgeService : Service() {
         .add("sec-ch-ua-mobile", "?0")
         .add("sec-ch-ua-platform", "\"Windows\"")
         .build()
-
-
-    private fun registerCommand() {
-        UiMessageUtils.getInstance().addListener(LayerEdgeCommand.MESSAGE_REQUEST_ACCOUNT) {
-            if (it.`object` is LayerEdgeAccountInfo) {
-                val info = it.`object` as LayerEdgeAccountInfo
-                refreshAccount(info)
-            }
-        }
-        UiMessageUtils.getInstance().addListener(LayerEdgeCommand.MESSAGE_REGISTER_ACCOUNT) {
-            if (it.`object` is LayerEdgeAccountInfo) {
-                val info = it.`object` as LayerEdgeAccountInfo
-                registerAccount(info)
-            }
-        }
-        UiMessageUtils.getInstance().addListener(LayerEdgeCommand.MESSAGE_REFRESH_NODE_STATE) {
-            if (it.`object` is LayerEdgeAccountInfo) {
-                val info = it.`object` as LayerEdgeAccountInfo
-                refreshNodeState(info)
-            }
-        }
-        UiMessageUtils.getInstance().addListener(LayerEdgeCommand.MESSAGE_CONNECT_NODE) {
-            if (it.`object` is LayerEdgeAccountInfo) {
-                val info = it.`object` as LayerEdgeAccountInfo
-                connectNode(info)
-            }
-        }
-        UiMessageUtils.getInstance().addListener(LayerEdgeCommand.MESSAGE_SIGN_EVERYDAY) {
-            val list = it.`object` as List<LayerEdgeAccountInfo>
-            sign(list)
-        }
-    }
 
     //https://referralapi.layeredge.io/api/task/connect-twitter
     //{
@@ -243,43 +282,42 @@ class LayerEdgeService : Service() {
     private fun sign(list: List<LayerEdgeAccountInfo>) {
         scopeNet {
             list.forEachIndexed { index,accountInfo ->
+                val delayTime = Random.nextLong(10,30)
                 try {
-                    val delayTime = Random.nextLong(10,30)
-                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet.id,
-                        "${accountInfo.wallet.address.formatAddress()} ${index}/${list.size} 下一个等待 ${delayTime} 秒"))
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet?.id,
+                        "${accountInfo.wallet?.address?.formatAddress()} ${index}/${list.size}"))
                     val timestamp = System.currentTimeMillis()
-                    val message = "I am claiming my daily node point for ${accountInfo.wallet.address} at ${timestamp}"
-                    val sign = Web3Utils.signPrefixedMessage(message,accountInfo.wallet.privateKey)
+                    val message = "I am claiming my daily node point for ${accountInfo.wallet?.address} at ${timestamp}"
+                    val sign = Web3Utils.signPrefixedMessage(message,accountInfo.wallet?.privateKey)
                     val response = Post<Response>("https://referralapi.layeredge.io/api/light-node/claim-node-points") {
                         json(
                             "sign" to sign,
                             "timestamp" to timestamp,
-                            "walletAddress" to accountInfo.wallet.address
+                            "walletAddress" to accountInfo.wallet?.address
                         )
                         setHeaders(headers)
                         setClient {
-                            setProxy(accountInfo.wallet.proxy)
+                            setProxy(accountInfo.wallet?.proxy)
                         }
                         converter = LayerEdgeConvert()
                     }.await()
                     JSONObject(response.body?.string()).let {
                         val statusCode = it.optInt("statusCode")
                         val message = it.optString("message")
-                        val data = it.optJSONObject("data")
                         if (statusCode == 0) {
-                            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,accountInfo.wallet.id,
-                                "${accountInfo.wallet.address.formatAddress()} 签到成功"))
-                            delay(delayTime*1000)
+                            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.SUCCESS,accountInfo.wallet?.id,
+                                "${accountInfo.wallet?.address?.formatAddress()} 签到成功 ${index}/${list.size} delayTime:$delayTime"))
                         } else {
-                            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,accountInfo.wallet.id,
-                                "${accountInfo.wallet.address.formatAddress()} $message"))
+                            LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.ERROR,accountInfo.wallet?.id,
+                                "${accountInfo.wallet?.address?.formatAddress()} $message ${index}/${list.size} delayTime:$delayTime"))
                         }
                     }
                 }catch (e: Exception) {
-                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet.id,
-                        e.message.toString()
+                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet?.id,
+                        e.message.toString() +"${index}/${list.size} delayTime:$delayTime"
                     ))
                 }
+                delay(delayTime*1000)
             }
         }
     }

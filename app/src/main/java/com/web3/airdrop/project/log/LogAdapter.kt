@@ -5,11 +5,9 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import com.chad.library.adapter4.BaseDifferAdapter
-import com.chad.library.adapter4.BaseQuickAdapter
 import com.chad.library.adapter4.viewholder.QuickViewHolder
 import com.web3.airdrop.R
 import com.web3.airdrop.bean.Web3Project
-import com.web3.airdrop.project.layeredge.LayerEdgeAccountInfo
 
 class LogAdapter : BaseDifferAdapter<LogData, QuickViewHolder>(object : DiffUtil.ItemCallback<LogData>() {
     override fun areItemsTheSame(

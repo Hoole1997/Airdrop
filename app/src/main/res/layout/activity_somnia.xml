@@ -11,14 +11,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+
+        </com.google.android.material.appbar.AppBarLayout>
+
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_wallet"
+            android:id="@+id/rv_account"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            tools:itemCount="2"
             app:spanCount="2"
+            tools:listitem="@layout/item_somnia_account"
+            tools:itemCount="4"
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
 </layout>

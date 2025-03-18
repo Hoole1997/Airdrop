@@ -1,10 +1,14 @@
 package com.web3.airdrop.extension
 
 import com.blankj.utilcode.util.LogUtils
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.web3.airdrop.data.Wallet
 import com.web3.airdrop.data.Wallet.Companion.getCredential
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
+import org.json.JSONArray
+import org.json.JSONObject
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.security.MessageDigest
@@ -30,7 +34,8 @@ object Extension {
 
 }
 
-fun OkHttpClient.Builder.setProxy(proxyContent: String) {
+fun OkHttpClient.Builder.setProxy(proxyContent: String?) {
+    if (proxyContent == null)return
     val account = getCredential(proxyContent, Wallet.PROXY_ACCOUNT)?:""
     val password = getCredential(proxyContent, Wallet.PROXY_PASSWORD)?:""
     val ip = getCredential(proxyContent, Wallet.PROXY_IP) ?:""
@@ -41,6 +46,19 @@ fun OkHttpClient.Builder.setProxy(proxyContent: String) {
         response.request.newBuilder()
             .header("Proxy-Authorization", Credentials.basic(account, password))
             .build()
+    }
+}
+
+fun String.formatJson(): String {
+    return try {
+        // 创建一个 GsonBuilder 实例，并设置为格式化模式
+        val gson: Gson = GsonBuilder().setPrettyPrinting().create()
+
+        // 将 JSON 字符串解析为对象并再转换为格式化的字符串
+        val jsonElement = gson.fromJson(this, Any::class.java)
+        gson.toJson(jsonElement)
+    } catch (e: Exception) {
+        "Invalid JSON format: ${e.message}"
     }
 }
 

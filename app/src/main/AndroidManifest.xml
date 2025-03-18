@@ -30,6 +30,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".project.layeredge.ActivityLayerEdge" android:launchMode="singleTop"/>
+        <activity android:name=".project.somnia.SomniaActivity" android:launchMode="singleTop"/>
         <service android:name=".project.layeredge.LayerEdgeService" android:foregroundServiceType="dataSync"/>
     </application>
 

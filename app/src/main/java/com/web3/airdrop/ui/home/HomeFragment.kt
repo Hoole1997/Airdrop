@@ -22,6 +22,7 @@ import com.web3.airdrop.bean.Web3Project
 import com.web3.airdrop.databinding.FragmentHomeBinding
 import com.web3.airdrop.databinding.ItemHomeProjectBinding
 import com.web3.airdrop.project.layeredge.ActivityLayerEdge
+import com.web3.airdrop.project.somnia.SomniaActivity
 
 class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
 
@@ -66,6 +67,9 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
                             "LayerEdge" -> {
                                 ActivityUtils.startActivity(ActivityLayerEdge::class.java)
                             }
+                            "SomNia" -> {
+                                ActivityUtils.startActivity(SomniaActivity::class.java)
+                            }
                             else -> {
 
                             }
@@ -78,6 +82,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
     private fun projectData() : List<Web3Project>{
         return arrayListOf<Web3Project>().apply {
             add(Web3Project(0,"LayerEdge", R.mipmap.icon_layeredge,"https://x.com/layeredge","https://dashboard.layeredge.io/"))
+            add(Web3Project(1,"SomNia",R.mipmap.icon_somnia,"",""))
         }
     }
 

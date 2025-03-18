@@ -4,10 +4,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.web3.airdrop.data.AppDatabase
+import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 class LayerEdgeModel : ViewModel() {
 
@@ -16,10 +15,20 @@ class LayerEdgeModel : ViewModel() {
     fun refreshLocalWallet() {
         viewModelScope.launch(Dispatchers.IO) {
             AppDatabase.getDatabase().walletDao().getWalletsByChain("ETH").let {
-                walletAccountEvent.postValue(it.map {
-                    LayerEdgeAccountInfo(it, nodePoints = 0, taskPoints = 0).apply {
+                val list = mutableListOf<LayerEdgeAccountInfo>()
+                it.forEach { localInfo ->
+                    val dbList = AppDatabase.getDatabase().layeredgeDao().getAccountByAddress(localInfo.address)
+                    if (dbList.isNotEmpty()) {
+                        list.add(dbList[0].apply {
+                            wallet = localInfo
+                        })
+                    } else {
+                        list.add(LayerEdgeAccountInfo().apply {
+                            wallet = localInfo
+                        })
                     }
-                }.toMutableList())
+                }
+                walletAccountEvent.postValue(list)
             }
         }
     }
@@ -42,52 +51,48 @@ class LayerEdgeModel : ViewModel() {
 
     fun allRequestAccountInfo() {
         viewModelScope.launch {
-            walletAccountEvent.value?.shuffled()?.forEach {
+            walletAccountEvent.value?.shuffled()?.let {
                 LayerEdgeCommand.requestAccountInfo(it)
-                delay(Random.nextLong(10,30))
             }
         }
     }
 
     fun registerAll() {
         viewModelScope.launch {
-            walletAccountEvent.value?.shuffled()?.forEach {
-                if (!it.isRegister) {
-                    LayerEdgeCommand.registerAccount(it)
-                    delay(Random.nextLong(10,30))
-                }
+            walletAccountEvent.value?.shuffled()?.filter {
+                !it.isRegister
+            }?.let {
+                LayerEdgeCommand.registerAccount(it)
             }
         }
     }
 
     fun refreshNodeState() {
         viewModelScope.launch {
-            walletAccountEvent.value?.shuffled()?.forEach {
+            walletAccountEvent.value?.shuffled()?.let {
                 LayerEdgeCommand.refreshNodeState(it)
-                delay(Random.nextLong(10,30))
             }
         }
     }
 
-    fun connectNode() {
+    fun connectNode(connect: Boolean) {
         viewModelScope.launch {
-            walletAccountEvent.value?.shuffled()?.forEach {
-                if (!it.nodeStart) {
-                    LayerEdgeCommand.connectNode(it)
-                    delay(Random.nextLong(10,30))
-                }
+            walletAccountEvent.value?.shuffled()?.filter {
+                !it.nodeStart
+            }?.let {
+                LayerEdgeCommand.connectNode(it,connect)
             }
         }
     }
 
     fun signEveryDay() {
         viewModelScope.launch {
-            walletAccountEvent.value?.shuffled()?.filter {
-                !it.isSign
-            }?.let {
+            walletAccountEvent.value?.shuffled()?.let {
                 LayerEdgeCommand.signEveryDay(it)
             }
         }
     }
+
+
 
 }
