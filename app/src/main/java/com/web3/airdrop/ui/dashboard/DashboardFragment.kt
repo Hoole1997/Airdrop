@@ -31,9 +31,9 @@ class DashboardFragment : BaseFragment<FragmentDashboardBinding, DashboardViewMo
         return FragmentDashboardBinding.inflate(layoutInflater)
     }
 
-    override fun initViewModel(): DashboardViewModel {
-        return ViewModelProvider(this)[DashboardViewModel::class.java]
-    }
+//    override fun initViewModel(): DashboardViewModel {
+//        return ViewModelProvider(this)[DashboardViewModel::class.java]
+//    }
 
     override fun initView(activity: FragmentActivity) {
         binding.btnChoose.setOnClickListener {

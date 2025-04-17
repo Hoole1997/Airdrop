@@ -4,9 +4,10 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 
 @Entity(tableName = "Wallet",indices = [Index(value = ["address"], unique = true)])
-data class Wallet(
+open class Wallet(
     @PrimaryKey(autoGenerate = true) val id: Int,
     val chain: String,
     val address: String,
@@ -14,7 +15,6 @@ data class Wallet(
     val alias: String,
     val proxy: String
 ) {
-
     @Ignore
     var check: Boolean = false
 

@@ -3,11 +3,13 @@ package com.web3.airdrop.project.log
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.util.TimeUtils
 import androidx.recyclerview.widget.DiffUtil
 import com.chad.library.adapter4.BaseDifferAdapter
 import com.chad.library.adapter4.viewholder.QuickViewHolder
 import com.web3.airdrop.R
 import com.web3.airdrop.bean.Web3Project
+import com.web3.airdrop.data.ProjectConfig
 
 class LogAdapter : BaseDifferAdapter<LogData, QuickViewHolder>(object : DiffUtil.ItemCallback<LogData>() {
     override fun areItemsTheSame(
@@ -30,8 +32,11 @@ class LogAdapter : BaseDifferAdapter<LogData, QuickViewHolder>(object : DiffUtil
         item: LogData?
     ) {
         item?.let {
-            holder.setText(R.id.tv_project, Web3Project.getProjectName(it.projectId)+":")
-            holder.setText(R.id.tv_account,"[${it.accountId}]")
+            holder.setText(R.id.tv_project, ProjectConfig.projectName(it.projectId)+":")
+            if (it.address?.isNotEmpty() == true) {
+                holder.setText(R.id.tv_account,"[${it.address}]")
+            }
+            holder.setText(R.id.tv_time, com.blankj.utilcode.util.TimeUtils.millis2String(it.time))
             holder.setText(R.id.tv_content,it.content)
             when (it.level) {
                 LogData.Level.ERROR -> {

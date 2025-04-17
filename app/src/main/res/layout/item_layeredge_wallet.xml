@@ -1,5 +1,6 @@
 <!-- res/layout/grid_item_layout.xml -->
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
         <variable
@@ -7,7 +8,7 @@
             type="Boolean" />
     </data>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/ll_root"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,47 +19,72 @@
         android:background="@drawable/registered_background">
 
         <TextView
-            android:id="@+id/eth_address"
+            android:id="@+id/tv_no"
+            android:text="No.1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <LinearLayout
+            android:id="@+id/ll_address"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="0xjfad..."
-            android:textColor="#1A1A1A"
-            android:textSize="16sp" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@id/tv_no"
+            android:layout_marginStart="10dp">
+
+            <TextView
+                android:text="地址："
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/eth_address"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="0xjfad0xjfad0xjfad0xjfad..."
+                android:textColor="#1A1A1A"
+                android:textSize="16sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tv_connect"
+            app:layout_constraintTop_toBottomOf="@id/ll_address"
+            app:layout_constraintStart_toStartOf="@id/ll_address"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:layout_marginBottom="4dp"
-            android:text="Connect: false"
+            android:text="连接状态: false"
             android:textColor="#555555"
-            android:textSize="14sp" />
-
-<!--        <TextView-->
-<!--            android:id="@+id/tv_checkin"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginBottom="8dp"-->
-<!--            android:text="CheckIn: false"-->
-<!--            android:textColor="#555555"-->
-<!--            android:textSize="14sp" />-->
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tv_connect_down_time"
-            android:text="ConnectDown:0"
-            android:layout_marginBottom="4dp"
+            android:text="最后同步:0"
+            android:textColor="#555555"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="@id/ll_address"
+            app:layout_constraintEnd_toEndOf="@id/ll_address"
+            app:layout_constraintTop_toTopOf="@id/tv_connect"
+            app:layout_constraintBottom_toBottomOf="@id/tv_connect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
         <TextView
             android:id="@+id/tv_checkin_day"
-            android:text="CheckinDay:0"
-            android:layout_marginBottom="4dp"
+            android:text="签到:0天"
+            android:textColor="#555555"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@id/ll_address"
+            app:layout_constraintTop_toTopOf="@id/tv_connect"
+            app:layout_constraintBottom_toBottomOf="@id/tv_connect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

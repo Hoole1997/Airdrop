@@ -16,7 +16,7 @@ import com.web3.airdrop.databinding.DialogWalletImportBinding
 import com.web3.airdrop.utils.FilePickerUtils.Companion.FILE_PICKER_REQUEST_CODE
 import com.web3.airdrop.utils.FilePickerUtils.Companion.readTextFromUri
 
-class WalletImportDialog(val model: WalletViewModel) : BottomSheetDialogFragment() {
+class WalletImportDialog(val model: WalletViewModel?) : BottomSheetDialogFragment() {
 
     private lateinit var binding: DialogWalletImportBinding
 
@@ -51,7 +51,7 @@ class WalletImportDialog(val model: WalletViewModel) : BottomSheetDialogFragment
                     ToastUtils.showShort("内容不能为空")
                     return@setOnClickListener
                 }
-                model.insertWallet(content)
+                model?.insertWallet(content)
                 ToastUtils.showShort("导入成功")
                 dismiss()
             }

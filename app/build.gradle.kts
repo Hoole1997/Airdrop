@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("kotlin-kapt")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -27,7 +27,7 @@ android {
             )
         }
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/INDEX.LIST"
             // 你可以根据需要排除其他文件
@@ -38,7 +38,7 @@ android {
             excludes += "META-INF/FastDoubleParser-LICENSE"
             excludes += "META-INF/FastDoubleParser-NOTICE"
             excludes += "META-INF/io.netty.versions.properties"
-
+            excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
         }
     }
     compileOptions {
@@ -68,16 +68,17 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("androidx.recyclerview:recyclerview:1.4.0")
 
-    val room_version = "2.6.1"
+    val room_version = "2.7.0"
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
-    kapt("androidx.room:room-compiler:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
+//    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("com.github.liangjingkanji:Net:3.7.0")
     implementation("com.github.ihsanbal:LoggingInterceptor:3.1.0") {
@@ -90,5 +91,8 @@ dependencies {
     implementation("net.sourceforge.jexcelapi:jxl:2.6.12")
     implementation("org.web3j:core:4.13.0")
     implementation ("org.web3j:core:4.12.3-android")
-//    implementation("")
+    implementation("io.github.scwang90:refresh-layout-kernel:3.0.0-alpha")
+    implementation("io.github.scwang90:refresh-header-classics:3.0.0-alpha")
+    implementation("io.github.scwang90:refresh-header-material:3.0.0-alpha")
+    implementation("io.github.scwang90:refresh-footer-classics:3.0.0-alpha")
 }

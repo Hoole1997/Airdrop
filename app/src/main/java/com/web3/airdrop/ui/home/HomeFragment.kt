@@ -3,26 +3,19 @@ package com.web3.airdrop.ui.home
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.blankj.utilcode.util.ActivityUtils
 import com.chad.library.adapter4.BaseQuickAdapter
 import com.chad.library.adapter4.viewholder.DataBindingHolder
 import com.web3.airdrop.R
 import com.web3.airdrop.base.BaseFragment
-import com.web3.airdrop.bean.Web3Project
+import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.databinding.FragmentHomeBinding
 import com.web3.airdrop.databinding.ItemHomeProjectBinding
-import com.web3.airdrop.project.layeredge.ActivityLayerEdge
-import com.web3.airdrop.project.somnia.SomniaActivity
+import com.web3.airdrop.project.ActivityProject
 
 class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
 
@@ -30,24 +23,28 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
         return FragmentHomeBinding.inflate(layoutInflater)
     }
 
-    override fun initViewModel(): HomeViewModel {
-        return ViewModelProvider(this)[HomeViewModel::class.java]
-    }
+//    override fun initViewModel(): HomeViewModel {
+//        return ViewModelProvider(this)[HomeViewModel::class.java]
+//    }
 
     override fun initView(activity: FragmentActivity) {
         initToolbar()
 
         val dividerItemDecoration = DividerItemDecoration(activity, LinearLayoutManager.VERTICAL)
         binding.rvProject.addItemDecoration(dividerItemDecoration)
-        binding.rvProject.adapter = object : BaseQuickAdapter<Web3Project, DataBindingHolder<ItemHomeProjectBinding>>(projectData()) {
+        binding.rvProject.adapter = object : BaseQuickAdapter<ProjectConfig.ProjectInfo, DataBindingHolder<ItemHomeProjectBinding>>(
+            ProjectConfig.projectData()) {
                 override fun onBindViewHolder(
                     holder: DataBindingHolder<ItemHomeProjectBinding>,
                     position: Int,
-                    item: Web3Project?
+                    item: ProjectConfig.ProjectInfo?
                 ) {
                     item?.let {
-                        holder.binding.ivIcon.setImageResource(item.icon)
-                        holder.binding.tvName.text = item.name
+                        holder.binding.ivIcon.setImageResource(it.icon)
+                        holder.binding.tvDescribe.text = it.describe
+                        holder.binding.tvStar.text = it.star.toString()
+                        holder.binding.tvTwitter.text = it.twitterUrl
+                        holder.binding.tvWebsite.text = it.website
                     }
                 }
 
@@ -62,28 +59,28 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, HomeViewModel>() {
             }.apply {
                 setOnItemClickListener { _, _, position ->
                     val data = getItem(position)
-                    data?.let {
-                        when(it.name) {
-                            "LayerEdge" -> {
-                                ActivityUtils.startActivity(ActivityLayerEdge::class.java)
-                            }
-                            "SomNia" -> {
-                                ActivityUtils.startActivity(SomniaActivity::class.java)
-                            }
-                            else -> {
-
-                            }
-                        }
-                    }
+                    startActivity(Intent().apply {
+                        setClass(activity, ActivityProject::class.java)
+                        putExtra("info",data)
+                    })
+//                    data?.let {
+//                        when(it.name) {
+//                            "LayerEdge" -> {
+//                                ActivityUtils.startActivity(ActivityLayerEdge::class.java)
+//                            }
+//                            "SomNia" -> {
+//                                ActivityUtils.startActivity(SomniaActivity::class.java)
+//                            }
+//                            "CoreSky" -> {
+//                                ActivityUtils.startActivity(ActivityCoreSky::class.java)
+//                            }
+//                            else -> {
+//
+//                            }
+//                        }
+//                    }
                 }
             }
-    }
-
-    private fun projectData() : List<Web3Project>{
-        return arrayListOf<Web3Project>().apply {
-            add(Web3Project(0,"LayerEdge", R.mipmap.icon_layeredge,"https://x.com/layeredge","https://dashboard.layeredge.io/"))
-            add(Web3Project(1,"SomNia",R.mipmap.icon_somnia,"",""))
-        }
     }
 
     private fun initToolbar() {

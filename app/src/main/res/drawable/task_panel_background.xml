@@ -1,0 +1,32 @@
+<!-- res/drawable/rounded_top_background.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+<!--    &lt;!&ndash; 阴影 &ndash;&gt;-->
+<!--    <item>-->
+<!--        <shape android:shape="rectangle">-->
+<!--            <corners android:topLeftRadius="16dp"-->
+<!--                android:topRightRadius="16dp"/>-->
+<!--            <solid android:color="#80000000"/> &lt;!&ndash; 阴影颜色，黑色 &ndash;&gt;-->
+<!--            <padding android:left="0dp" android:top="4dp" android:right="0dp" android:bottom="0dp"/> &lt;!&ndash; 调整阴影位置 &ndash;&gt;-->
+<!--        </shape>-->
+<!--    </item>-->
+
+    <!-- 背景颜色 -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:topLeftRadius="16dp"
+                android:topRightRadius="16dp"/>
+            <solid android:color="@macro/m3_comp_primary_navigation_tab_container_color"/> <!-- 背景颜色 -->
+        </shape>
+    </item>
+
+    <!-- 拖拽条 -->
+    <item android:top="8dp" android:gravity="center_horizontal">
+        <shape android:shape="rectangle">
+            <size android:width="60dp" android:height="3dp"/> <!-- 拖拽条的大小 -->
+            <solid android:color="#CCCCCC"/> <!-- 拖拽条颜色 -->
+            <corners android:radius="10dp"/>
+        </shape>
+    </item>
+
+</layer-list>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:orientation="vertical"
+        android:fitsSystemWindows="true"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@macro/m3_comp_primary_navigation_tab_container_color"
+            android:orientation="vertical">
+
+            <com.google.android.material.appbar.CollapsingToolbarLayout
+                app:layout_scrollFlags="enterAlways|exitUntilCollapsed|scroll|snap"
+                app:titleEnabled="false"
+                app:statusBarScrim="@macro/m3_comp_primary_navigation_tab_container_color"
+                app:contentScrim="@macro/m3_comp_primary_navigation_tab_container_color"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:padding="8dp"
+                    android:layout_marginTop="?attr/actionBarSize"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.makeramen.roundedimageview.RoundedImageView
+                        android:id="@+id/iv_icon"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:src="@mipmap/icon_coresky"
+                        app:riv_corner_radius="5dp"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/ll_star"
+                        android:gravity="center_vertical"
+                        app:layout_constraintStart_toStartOf="@id/iv_icon"
+                        app:layout_constraintEnd_toEndOf="@id/iv_icon"
+                        app:layout_constraintTop_toBottomOf="@id/iv_icon"
+                        android:layout_marginTop="18dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/tv_star"
+                            android:text="0"
+                            android:textStyle="bold"
+                            android:textSize="22sp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <ImageView
+                            android:src="@mipmap/icon_star"
+                            android:layout_marginStart="5dp"
+                            android:layout_marginTop="1dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"/>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tv_describe"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintStart_toEndOf="@id/iv_icon"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/iv_icon"
+                        android:layout_marginStart="8dp"
+                        android:textSize="12sp"
+                        android:maxLines="3"
+                        android:ellipsize="end"
+                        tools:text="体验音频空间、视频聊天、实时流媒体、AI 代理、游戏和 DeFI 的闪电般快速的数字连接 - 增强用户体验并将云成本降低高达 95%。体验音频空间、视频聊天、实时流媒体、AI 代理、游戏和 DeFI 的闪电般快速的数字连接 - 增强用户体验并将云成本降低高达 95%。" />
+
+                    <LinearLayout
+                        android:id="@+id/ll_twitter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintStart_toStartOf="@id/tv_describe"
+                        app:layout_constraintEnd_toEndOf="@id/tv_describe"
+                        app:layout_constraintTop_toBottomOf="@id/tv_describe"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="7dp">
+
+                        <ImageView
+                            android:src="@mipmap/icon_twitter"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"/>
+                        <TextView
+                            android:id="@+id/tv_twitter"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:autoLink="web"
+                            android:layout_marginStart="5dp"
+                            tools:text="https://x.com/huddle01com"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintStart_toStartOf="@id/ll_twitter"
+                        app:layout_constraintEnd_toEndOf="@id/ll_twitter"
+                        app:layout_constraintTop_toBottomOf="@id/ll_twitter"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="7dp">
+
+                        <ImageView
+                            android:src="@mipmap/icon_website"
+                            android:layout_width="15dp"
+                            android:layout_height="15dp"/>
+                        <TextView
+                            android:id="@+id/tv_website"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:autoLink="web"
+                            android:layout_marginStart="5dp"
+                            tools:text="https://x.com/huddle01com"/>
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolBar"
+                    app:layout_collapseMode="pin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:title="Web3"
+                    app:navigationIcon="@drawable/ic_back_arrow"/>
+
+            </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_account"
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
+            tools:listitem="@layout/item_wallet"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:orientation="vertical"
+            tools:itemCount="10"
+            android:background="#fafafa"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/bottom_card"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+            app:behavior_peekHeight="?attr/actionBarSize"
+            app:behavior_hideable="true"
+            app:cardCornerRadius="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="600dp">
+
+            <View
+                android:background="@drawable/task_panel_background"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"/>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_marginTop="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/panel_tab"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tabRippleColor="@android:color/transparent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.google.android.material.tabs.TabItem
+                        android:text="账号详情"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <com.google.android.material.tabs.TabItem
+                        android:text="任务"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <com.google.android.material.tabs.TabItem
+                        android:text="日志"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                </com.google.android.material.tabs.TabLayout>
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/panel_content"
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:background="@macro/m3_comp_primary_navigation_tab_container_color"
+                    app:layout_constraintTop_toBottomOf="@id/panel_tab"
+                    app:layout_constraintBottom_toBottomOf="parent"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.cardview.widget.CardView>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</layout>

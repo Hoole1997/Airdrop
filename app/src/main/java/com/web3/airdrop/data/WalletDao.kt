@@ -16,7 +16,7 @@ interface WalletDao {
     fun insertWalletList(wallet: List<Wallet>)
 
     @Query("SELECT * FROM Wallet WHERE chain = :chainType")
-    fun getWalletsByChain(chainType: String): List<Wallet>
+    suspend fun getWalletsByChain(chainType: String): List<Wallet>
 
     @Query("DELETE FROM Wallet WHERE address = :address")
     fun deleteWalletByAddress(address: String)

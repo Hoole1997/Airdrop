@@ -7,38 +7,106 @@
 
     </data>
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:padding="8dp"
         android:layout_width="match_parent"
-        android:layout_height="80dp">
+        android:layout_height="wrap_content">
 
         <com.makeramen.roundedimageview.RoundedImageView
             android:id="@+id/iv_icon"
-            app:riv_corner_radius="8dp"
-            tools:src="@drawable/ic_launcher_background"
-            android:layout_margin="15dp"
-            android:layout_gravity="center_vertical"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@mipmap/icon_coresky"
+            app:riv_corner_radius="5dp"
             android:layout_width="50dp"
-            android:layout_height="50dp" />
+            android:layout_height="50dp"/>
+
+        <LinearLayout
+            android:id="@+id/ll_star"
+            android:gravity="center_vertical"
+            app:layout_constraintStart_toStartOf="@id/iv_icon"
+            app:layout_constraintEnd_toEndOf="@id/iv_icon"
+            app:layout_constraintTop_toBottomOf="@id/iv_icon"
+            android:layout_marginTop="18dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/tv_star"
+                android:text="0"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:layout_gravity="center_vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <ImageView
+                android:src="@mipmap/icon_star"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="1dp"
+                android:layout_gravity="center_vertical"
+                android:layout_width="15dp"
+                android:layout_height="15dp"/>
+
+        </LinearLayout>
 
         <TextView
-            android:id="@+id/tv_name"
-            tools:text="LayerEdge"
-            android:textSize="20sp"
-            android:textColor="@color/black"
-            android:layout_gravity="center_vertical"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        <Space
+            android:id="@+id/tv_describe"
             android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"/>
-        <ImageView
-            android:layout_marginEnd="10dp"
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/baseline_arrow_forward_ios_24"
-            android:layout_width="15dp"
-            android:layout_height="15dp"/>
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toEndOf="@id/iv_icon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/iv_icon"
+            android:layout_marginStart="8dp"
+            android:textSize="12sp"
+            android:lines="3"
+            android:ellipsize="end"
+            tools:text="体验音频空间、视频聊天、实时流媒体、AI 代理、游戏和 DeFI 的闪电般快速的数字连接 - 增强用户体验并将云成本降低高达 95%。体验音频空间、视频聊天、实时流媒体、AI 代理、游戏和 DeFI 的闪电般快速的数字连接 - 增强用户体验并将云成本降低高达 95%。" />
 
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/ll_twitter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="@id/tv_describe"
+            app:layout_constraintEnd_toEndOf="@id/tv_describe"
+            app:layout_constraintTop_toBottomOf="@id/tv_describe"
+            android:gravity="center_vertical"
+            android:layout_marginTop="7dp">
+
+            <ImageView
+                android:src="@mipmap/icon_twitter"
+                android:layout_width="15dp"
+                android:layout_height="15dp"/>
+            <TextView
+                android:id="@+id/tv_twitter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:layout_marginStart="5dp"
+                tools:text="https://x.com/huddle01com"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="@id/ll_twitter"
+            app:layout_constraintEnd_toEndOf="@id/ll_twitter"
+            app:layout_constraintTop_toBottomOf="@id/ll_twitter"
+            android:gravity="center_vertical"
+            android:layout_marginTop="7dp">
+
+            <ImageView
+                android:src="@mipmap/icon_website"
+                android:layout_width="15dp"
+                android:layout_height="15dp"/>
+            <TextView
+                android:id="@+id/tv_website"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:layout_marginStart="5dp"
+                tools:text="https://x.com/huddle01com"/>
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

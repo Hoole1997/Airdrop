@@ -33,7 +33,7 @@ class WalletFragment : BaseFragment<FragmentWalletBinding, WalletViewModel>(),
         return FragmentWalletBinding.inflate(layoutInflater)
     }
 
-    override fun initViewModel(): WalletViewModel {
+    override suspend fun initViewModel(): WalletViewModel {
         return ViewModelProvider(this)[WalletViewModel::class.java]
     }
 
@@ -86,14 +86,14 @@ class WalletFragment : BaseFragment<FragmentWalletBinding, WalletViewModel>(),
                 }
                 .show()
         }
-        model.wallet.observe(this) {
+        model?.wallet?.observe(this) {
             walletAdapter.submitList(it)
         }
-        model.queryWallet(chainList[binding.tabChain.selectedTabPosition])
+        model?.queryWallet(chainList[binding.tabChain.selectedTabPosition])
     }
 
     private fun deleteWallet() {
-        model.deleteWallet(walletAdapter.items.filter {
+        model?.deleteWallet(walletAdapter.items.filter {
             it.check == true
         })
         switchMode()
@@ -122,7 +122,7 @@ class WalletFragment : BaseFragment<FragmentWalletBinding, WalletViewModel>(),
 
     override fun onTabSelected(tab: TabLayout.Tab?) {
         tab?.let {
-            model.queryWallet(chainList[tab.position])
+            model?.queryWallet(chainList[tab.position])
         }
     }
 

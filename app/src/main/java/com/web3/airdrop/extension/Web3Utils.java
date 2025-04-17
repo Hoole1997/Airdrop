@@ -1,5 +1,8 @@
 package com.web3.airdrop.extension;
 
+import com.blankj.utilcode.util.LogUtils;
+
+import org.bouncycastle.asn1.LocaleUtil;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Keys;
 import org.web3j.crypto.Sign;
@@ -71,6 +74,7 @@ public class Web3Utils {
         BigInteger publicKey = Sign.signedPrefixedMessageToKey(msgHash, signatureData);
         // 得到公钥(私钥对应的钱包地址)
         String parseAddress = "0x" + Keys.getAddress(publicKey);
+        LogUtils.d(parseAddress);
         // 将钱包地址进行比对
         return parseAddress.equalsIgnoreCase(walletAddress);
     }

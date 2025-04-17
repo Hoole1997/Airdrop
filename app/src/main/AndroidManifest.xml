@@ -31,7 +31,10 @@
         </activity>
         <activity android:name=".project.layeredge.ActivityLayerEdge" android:launchMode="singleTop"/>
         <activity android:name=".project.somnia.SomniaActivity" android:launchMode="singleTop"/>
+        <activity android:name=".project.coresky.ActivityCoreSky" android:launchMode="singleTop"/>
+        <activity android:name=".project.ActivityProject" android:launchMode="singleTop"/>
         <service android:name=".project.layeredge.LayerEdgeService" android:foregroundServiceType="dataSync"/>
+        <service android:name=".project.coresky.CoreSkyService" android:foregroundServiceType="dataSync"/>
     </application>
 
 </manifest>
