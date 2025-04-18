@@ -21,6 +21,7 @@ import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.extension.Extension.formatAddress
 import com.web3.airdrop.extension.Web3Utils
 import com.web3.airdrop.extension.setProxy
+import com.web3.airdrop.project.ActivityProject
 import com.web3.airdrop.project.coresky.CoreSkyModel
 import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 import com.web3.airdrop.project.log.LogData
@@ -45,12 +46,18 @@ class LayerEdgeService : BaseService<LayerEdgeModel>() {
 
     }
 
-    override fun initProjectId(): Int {
-        return ProjectConfig.PROJECT_ID_LAYEREDGE
+    override fun initProjectInfo(): ProjectConfig.ProjectInfo {
+        return ProjectConfig.projectData().first{
+            it.projectId == ProjectConfig.PROJECT_ID_LAYEREDGE
+        }
     }
 
     override fun initViewModel(): LayerEdgeModel {
         return ViewModelProvider(this)[LayerEdgeModel::class.java]
+    }
+
+    override fun notificationIntent(): Intent {
+        return Intent(this, ActivityProject::class.java)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -305,7 +312,7 @@ class LayerEdgeService : BaseService<LayerEdgeModel>() {
                         }
                         converter = LayerEdgeConvert()
                     }.await()
-                    JSONObject(response.body?.string()).let {
+                    JSONObject(response.body.toString()).let {
                         val statusCode = it.optInt("statusCode")
                         val message = it.optString("message")
                         if (statusCode == 0) {

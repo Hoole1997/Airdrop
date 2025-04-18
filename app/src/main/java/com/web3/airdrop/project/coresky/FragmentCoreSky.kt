@@ -28,13 +28,13 @@ class FragmentCoreSky: BaseProjectFragment<CoreSkyModel>() {
     override fun initView(activity: FragmentActivity) {
         super.initView(activity)
 
-        accountModule = CoreSkyAccountModule(activity,binding.rvAccount).apply {
-            loadItemAccountModule<CoreSkyUser, ItemCoreskyWalletBinding>(this)
-        }
         loadTaskPanelModule(
             accountInfoModule = IPanelAccountInfoModule<CoreSkyModel>(activity,model),
             taskModule = FragmentCoreSkyPanelTask(activity,model)
         )
+        accountModule = CoreSkyAccountModule(activity,binding.rvAccount).apply {
+            loadItemAccountModule<CoreSkyUser, ItemCoreskyWalletBinding>(this)
+        }
         model?.walletAccountEvent?.observe(this) {
             accountModule?.refreshData(it)
         }

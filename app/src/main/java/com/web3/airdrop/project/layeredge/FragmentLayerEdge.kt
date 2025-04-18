@@ -16,10 +16,6 @@ class FragmentLayerEdge : BaseProjectFragment<LayerEdgeModel>() {
     lateinit var info: ProjectConfig.ProjectInfo
     var accountModule: LayerEdgeAccountModule? = null
 
-//    suspend fun initModel(): LayerEdgeModel {
-//        return ViewModelProvider(requireActivity())[LayerEdgeModel::class.java]
-//    }
-
     override fun initProjectInfo(): ProjectConfig.ProjectInfo {
         info = arguments?.getSerializable("info") as ProjectConfig.ProjectInfo
         return info

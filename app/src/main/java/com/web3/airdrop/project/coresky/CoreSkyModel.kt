@@ -157,7 +157,9 @@ class CoreSkyModel : BaseModel() {
                     }
                     resultUser.wallet = user.wallet
                     val newList = it.toMutableList().apply {
-                        set(findIndex, resultUser)
+                        if (findIndex < this.size && findIndex >= 0) {
+                            set(findIndex, resultUser)
+                        }
                     }
                     walletAccountEvent.postValue(newList)
                 }
@@ -190,7 +192,9 @@ class CoreSkyModel : BaseModel() {
                     }
                     loginUser.wallet = user.wallet
                     val newList = it.toMutableList().apply {
-                        set(findIndex, loginUser)
+                        if (findIndex < this.size && findIndex >= 0) {
+                            set(findIndex, loginUser)
+                        }
                     }
                     walletAccountEvent.postValue(newList)
                 }
@@ -328,7 +332,6 @@ class CoreSkyModel : BaseModel() {
                         }
                         val delayTime = Random.nextLong(5000, 15000)
 
-
                         if (index == panelTask.size-1) {
                             delay(1000)
                             sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"${task.taskName}完成"))
@@ -340,7 +343,7 @@ class CoreSkyModel : BaseModel() {
                     }
                     if (index < accountList.size-1) {
                         val delayTime = Random.nextLong(5000, 21000)
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"全部任务完成，等待${delayTime/1000}秒"))
+                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"全部任务完成，${index+1}/${accountList.size}，等待${delayTime/1000}秒"))
                         delay(delayTime)
                     }
                 }.onFailure {
@@ -370,7 +373,7 @@ class CoreSkyModel : BaseModel() {
                             }
                             loginUser.wallet = user.wallet
                             val newList = it.toMutableList().apply {
-                                if (findIndex < this.size) {
+                                if (findIndex < this.size && findIndex >= 0) {
                                     set(findIndex, loginUser)
                                 }
                             }
@@ -392,7 +395,7 @@ class CoreSkyModel : BaseModel() {
                         }
                         apiUser.wallet = user.wallet
                         val newList = it.toMutableList().apply {
-                            if (findIndex < this.size) {
+                            if (findIndex < this.size && findIndex >= 0) {
                                 set(findIndex, apiUser)
                             }
                         }

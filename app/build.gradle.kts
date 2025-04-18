@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.devtools.ksp")
+    id("androidx.room")
 }
 
 android {
@@ -16,8 +17,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
 
+//        ksp {
+//            arg("room.schemaLocation", "$projectDir/schemas")
+//        }
+
+    }
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -48,6 +56,7 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
     buildFeatures {
         dataBinding = true
 //        viewBinding = true
@@ -95,4 +104,5 @@ dependencies {
     implementation("io.github.scwang90:refresh-header-classics:3.0.0-alpha")
     implementation("io.github.scwang90:refresh-header-material:3.0.0-alpha")
     implementation("io.github.scwang90:refresh-footer-classics:3.0.0-alpha")
+    implementation("com.github.2captcha:2captcha-java:1.3.1")
 }

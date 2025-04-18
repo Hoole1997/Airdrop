@@ -3,6 +3,7 @@ package com.web3.airdrop.data
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import com.web3.airdrop.R
+import com.web3.airdrop.project.TakerProtocol.FragmentTakerProtocol
 import com.web3.airdrop.project.coresky.FragmentCoreSky
 import com.web3.airdrop.project.layeredge.FragmentLayerEdge
 import java.io.Serializable
@@ -13,6 +14,7 @@ class ProjectConfig {
 
         const val PROJECT_ID_LAYEREDGE = 1
         const val PROJECT_ID_CORESKY = 2
+        const val PROJECT_ID_TAKERPROTOCOL = 3
 
         fun projectData(): List<ProjectInfo> {
             return mutableListOf<ProjectInfo>(
@@ -35,6 +37,16 @@ class ProjectConfig {
                     describe = "CoreSky | 🔥0撸项目，签到类\n" +
                             "国人项目，融资2000万，2025月5月3号TGE。签到，投票，抽奖",
                     star = 3
+                ),
+                ProjectInfo(
+                    projectId = PROJECT_ID_TAKERPROTOCOL,
+                    name = "TakerProtocol",
+                    icon = R.mipmap.icon_takerprotocol,
+                    twitterUrl = "https://x.com/TakerProtocol",
+                    website = "https://earn.taker.xyz/",
+                    describe = "TakerProtocol | 🔥0撸项目，签到类\n" +
+                            "一共获得2次融资，已披露是300万种子轮融资，第二次融资金额未披露，由Electric Capital，DCG 领投，Dradonfly,Spartan Group 等众多VC参投",
+                    star = 4
                 )
             )
         }
@@ -63,6 +75,9 @@ class ProjectConfig {
                 }
                 PROJECT_ID_CORESKY -> {
                     FragmentCoreSky()
+                }
+                PROJECT_ID_TAKERPROTOCOL -> {
+                    FragmentTakerProtocol()
                 }
                 else -> null
             }.apply {
