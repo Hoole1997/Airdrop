@@ -8,7 +8,6 @@ import com.web3.airdrop.base.BaseProjectFragment
 import com.web3.airdrop.base.IPanelAccountInfoModule
 import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.databinding.ItemLayeredgeWalletBinding
-import com.web3.airdrop.project.coresky.CoreSkyService
 import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 
 class FragmentLayerEdge : BaseProjectFragment<LayerEdgeModel>() {
@@ -24,6 +23,12 @@ class FragmentLayerEdge : BaseProjectFragment<LayerEdgeModel>() {
     override fun startTaskService() {
         activity?.let {
             it.startForegroundService(Intent(it, LayerEdgeService::class.java))
+        }
+    }
+
+    override fun stopTaskService() {
+        activity?.let {
+            it.stopService(Intent(it, LayerEdgeService::class.java))
         }
     }
 

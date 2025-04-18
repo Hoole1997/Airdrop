@@ -17,6 +17,7 @@ import com.chad.library.adapter4.BaseDifferAdapter
 import com.chad.library.adapter4.viewholder.DataBindingHolder
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayoutMediator
+import com.web3.airdrop.R
 import com.web3.airdrop.data.ProjectConfig.ProjectInfo
 import com.web3.airdrop.databinding.FragmentBaseProjectBinding
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -77,11 +78,21 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
                 activity.finish()
             }
         }
+        binding.toolBar.inflateMenu(R.menu.menu_project)
+        binding.toolBar.setOnMenuItemClickListener {
+            if (it.itemId == R.id.menu_close) {
+                stopTaskService()
+                activity.finish()
+            }
+            true
+        }
     }
 
     abstract fun initProjectInfo(): ProjectInfo
 
     abstract fun startTaskService()
+
+    abstract fun stopTaskService()
 
     fun <INFo: Any,DB: ViewDataBinding> loadItemAccountModule(projectAccountModule : IProjectAccountModule<INFo,DB>) {
         val adapter = object : BaseDifferAdapter<INFo, DataBindingHolder<DB>>(projectAccountModule.initDiffCallback()){

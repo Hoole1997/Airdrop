@@ -28,6 +28,12 @@ class FragmentTakerProtocol : BaseProjectFragment<TakerModel>() {
         }
     }
 
+    override fun stopTaskService() {
+        activity?.let {
+            it.stopService(Intent(it, TakerProtocolService::class.java))
+        }
+    }
+
     override fun initView(activity: FragmentActivity) {
         super.initView(activity)
 

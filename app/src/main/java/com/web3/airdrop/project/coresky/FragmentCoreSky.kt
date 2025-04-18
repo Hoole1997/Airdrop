@@ -25,6 +25,12 @@ class FragmentCoreSky: BaseProjectFragment<CoreSkyModel>() {
         }
     }
 
+    override fun stopTaskService() {
+        activity?.let {
+            it.stopService(Intent(it, CoreSkyService::class.java))
+        }
+    }
+
     override fun initView(activity: FragmentActivity) {
         super.initView(activity)
 
