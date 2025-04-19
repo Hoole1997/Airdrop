@@ -6,14 +6,18 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.view.ViewGroup
 import androidx.cardview.widget.CardView
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.blankj.utilcode.util.LogUtils
 import com.chad.library.adapter4.BaseDifferAdapter
+import com.chad.library.adapter4.dragswipe.QuickDragAndSwipe
+import com.chad.library.adapter4.dragswipe.listener.DragAndSwipeDataCallback
 import com.chad.library.adapter4.viewholder.DataBindingHolder
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayoutMediator
@@ -77,6 +81,7 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
             binding.toolBar.setNavigationOnClickListener {
                 activity.finish()
             }
+            binding.clInfo.visibility = View.VISIBLE
         }
         binding.toolBar.inflateMenu(R.menu.menu_project)
         binding.toolBar.setOnMenuItemClickListener {
@@ -121,6 +126,7 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
                 return DataBindingHolder(projectAccountModule.initItemBinding())
             }
         }
+
         projectAccountModule.initAdapter(adapter)
         projectAccountModule.onItemClickListener {
             if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) {

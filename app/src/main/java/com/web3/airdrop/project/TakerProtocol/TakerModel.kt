@@ -8,8 +8,6 @@ import com.blankj.utilcode.util.GsonUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.TimeUtils
 import com.drake.net.Net
-import com.twocaptcha.TwoCaptcha
-import com.twocaptcha.captcha.ReCaptcha
 import com.web3.airdrop.base.BaseModel
 import com.web3.airdrop.base.IPanelTaskModule
 import com.web3.airdrop.data.AppDatabase
@@ -242,6 +240,7 @@ class TakerModel : BaseModel() {
                     sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.SUCCESS,account.walletAddress.formatAddress(),""))
                     if (!account.isLogin()) {
                         account.token = apiLogin(account)
+                        account.lastSyncTime = System.currentTimeMillis()
                     }
                     val userTask = taskStateList(account)
                     panelTask.filter { task ->

@@ -10,6 +10,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.blankj.utilcode.util.Utils
 import com.web3.airdrop.project.TakerProtocol.data.TakerUser
 import com.web3.airdrop.project.TakerProtocol.db.TakerProtocolDao
+import com.web3.airdrop.project.bless.data.BlessNodeDao
+import com.web3.airdrop.project.bless.data.BlessNodeInfo
 import com.web3.airdrop.project.coresky.data.CoreSkyUser
 import com.web3.airdrop.project.coresky.db.CoreSkyDao
 import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountDao
@@ -18,12 +20,17 @@ import com.web3.airdrop.project.somnia.bean.SomniaAccount
 import com.web3.airdrop.project.somnia.bean.SomniaDao
 
 @Database(
-    entities = [Wallet::class, SomniaAccount::class, LayerEdgeAccountInfo::class, CoreSkyUser::class, TakerUser::class],
-    version = 3,
+    entities = [
+        Wallet::class,
+        SomniaAccount::class,
+        LayerEdgeAccountInfo::class,
+        CoreSkyUser::class,
+        TakerUser::class,
+        BlessNodeInfo::class],
+    version = 4,
     exportSchema = true,
     autoMigrations = [
-//        AutoMigration(from = 1, to = 2),
-//        AutoMigration(from = 2, to = 3)
+        AutoMigration(from = 3, to = 4),
     ]
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -37,6 +44,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun coreSkyDao(): CoreSkyDao
 
     abstract fun takerDao(): TakerProtocolDao
+
+    abstract fun blessNodeDao(): BlessNodeDao
 
     companion object {
         @Volatile

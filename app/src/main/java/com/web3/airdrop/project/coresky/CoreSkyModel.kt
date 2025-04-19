@@ -150,6 +150,7 @@ class CoreSkyModel : BaseModel() {
                 resultUser.wallet = user.wallet
                 resultUser.token = this.getOrNull()!!.token
                 user.token = this.getOrNull()!!.token
+                user.lastSyncTime = System.currentTimeMillis()
                 AppDatabase.getDatabase().coreSkyDao().insertOrUpdate(resultUser)
                 walletAccountEvent.value?.let {
                     val findIndex = it.indexOfFirst {
@@ -310,6 +311,9 @@ class CoreSkyModel : BaseModel() {
             accountList.forEachIndexed {index, account ->
                 runCatching {
                     sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.SUCCESS,account.address.formatAddress(),""))
+                    if (!account.isLogin()) {
+                        account.token = apiLogin(account)?.token
+                    }
                     panelTask.apply {
                         if (randomMode.value == true) {
                             shuffled()

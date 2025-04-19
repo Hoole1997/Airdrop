@@ -32,11 +32,11 @@ abstract class BaseFragment<V : ViewDataBinding, VM : ViewModel> : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val dialog = showLoadingDialog()
+//        val dialog = showLoadingDialog()
         lifecycleScope.launch() {
             model = initViewModel()
             withContext(Dispatchers.Main) {
-                dialog.dismiss()
+//                dialog.dismiss()
                 initView(requireActivity())
             }
         }

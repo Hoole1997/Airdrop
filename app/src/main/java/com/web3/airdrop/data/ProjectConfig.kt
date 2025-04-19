@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import com.web3.airdrop.R
 import com.web3.airdrop.project.TakerProtocol.FragmentTakerProtocol
+import com.web3.airdrop.project.bless.FragmentBless
 import com.web3.airdrop.project.coresky.FragmentCoreSky
 import com.web3.airdrop.project.layeredge.FragmentLayerEdge
 import java.io.Serializable
@@ -15,6 +16,7 @@ class ProjectConfig {
         const val PROJECT_ID_LAYEREDGE = 1
         const val PROJECT_ID_CORESKY = 2
         const val PROJECT_ID_TAKERPROTOCOL = 3
+        const val PROJECT_ID_BLESS = 4
 
         fun projectData(): List<ProjectInfo> {
             return mutableListOf<ProjectInfo>(
@@ -47,6 +49,16 @@ class ProjectConfig {
                     describe = "TakerProtocol | 🔥0撸项目，签到类\n" +
                             "一共获得2次融资，已披露是300万种子轮融资，第二次融资金额未披露，由Electric Capital，DCG 领投，Dradonfly,Spartan Group 等众多VC参投",
                     star = 4
+                ),
+                ProjectInfo(
+                    projectId = PROJECT_ID_BLESS,
+                    name = "BLESS",
+                    icon = R.mipmap.icon_bless,
+                    twitterUrl = "https://x.com/theblessnetwork",
+                    website = "https://bless.network/dashboard",
+                    describe = "BLESS | 🔥0撸项目，DePin挂机\n" +
+                            "融资800万美金的DePin挂机项目Bless，M31、NGC 等11个机构投资，预计2025年TGE空投，比例80%，该项目同时是加州大学伯克利分校区块链加速器 2023 年批次孵化项目",
+                    star = 4
                 )
             )
         }
@@ -78,6 +90,9 @@ class ProjectConfig {
                 }
                 PROJECT_ID_TAKERPROTOCOL -> {
                     FragmentTakerProtocol()
+                }
+                PROJECT_ID_BLESS -> {
+                    FragmentBless()
                 }
                 else -> null
             }.apply {

@@ -25,9 +25,12 @@
                 app:statusBarScrim="@macro/m3_comp_primary_navigation_tab_container_color"
                 app:contentScrim="@macro/m3_comp_primary_navigation_tab_container_color"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:animateLayoutChanges="true">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/cl_info"
+                    android:visibility="invisible"
                     android:padding="8dp"
                     android:layout_marginTop="?attr/actionBarSize"
                     android:layout_width="match_parent"
@@ -62,6 +65,7 @@
                             android:layout_height="wrap_content"/>
 
                         <ImageView
+                            android:id="@+id/iv_star"
                             android:src="@mipmap/icon_star"
                             android:layout_marginStart="5dp"
                             android:layout_marginTop="1dp"
@@ -143,7 +147,7 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
+        <com.aitsuki.swipe.SwipeMenuRecyclerView
             android:id="@+id/rv_account"
             app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
             tools:listitem="@layout/item_wallet"

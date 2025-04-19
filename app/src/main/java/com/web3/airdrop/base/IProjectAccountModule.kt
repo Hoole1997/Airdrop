@@ -9,7 +9,7 @@ import com.chad.library.adapter4.viewholder.DataBindingHolder
 abstract class IProjectAccountModule<T: Any,DB: ViewDataBinding> {
 
     private var adapter: BaseDifferAdapter<T,DataBindingHolder<DB>>? = null
-    private var onClickListener: ((data: T) -> Unit)? = null
+    var onClickListener: ((data: T) -> Unit)? = null
     abstract fun initItemBinding(): DB
     abstract fun initRecyclerLayoutManager(): LayoutManager
     abstract fun initDiffCallback(): DiffUtil.ItemCallback<T>
