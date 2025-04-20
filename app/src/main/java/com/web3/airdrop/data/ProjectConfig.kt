@@ -7,6 +7,7 @@ import com.web3.airdrop.project.TakerProtocol.FragmentTakerProtocol
 import com.web3.airdrop.project.bless.FragmentBless
 import com.web3.airdrop.project.coresky.FragmentCoreSky
 import com.web3.airdrop.project.layeredge.FragmentLayerEdge
+import com.web3.airdrop.project.takersowing.FragmentTakerSowing
 import java.io.Serializable
 
 class ProjectConfig {
@@ -17,6 +18,7 @@ class ProjectConfig {
         const val PROJECT_ID_CORESKY = 2
         const val PROJECT_ID_TAKERPROTOCOL = 3
         const val PROJECT_ID_BLESS = 4
+        const val PROJECT_ID_TAKERPROTOCOL_SOWING = 5
 
         fun projectData(): List<ProjectInfo> {
             return mutableListOf<ProjectInfo>(
@@ -59,6 +61,16 @@ class ProjectConfig {
                     describe = "BLESS | 🔥0撸项目，DePin挂机\n" +
                             "融资800万美金的DePin挂机项目Bless，M31、NGC 等11个机构投资，预计2025年TGE空投，比例80%，该项目同时是加州大学伯克利分校区块链加速器 2023 年批次孵化项目",
                     star = 4
+                ),
+                ProjectInfo(
+                    projectId = PROJECT_ID_TAKERPROTOCOL_SOWING,
+                    name = "TakerSowing",
+                    icon = R.mipmap.icon_takerprotocol,
+                    twitterUrl = "https://x.com/TakerProtocol",
+                    website = "https://sowing.taker.xyz/",
+                    describe = "TakerSowing | 🔥0撸项目，签到类\n" +
+                            "一共获得2次融资，已披露是300万种子轮融资，第二次融资金额未披露，由Electric Capital，DCG 领投，Dradonfly,Spartan Group 等众多VC参投",
+                    star = 4
                 )
             )
         }
@@ -93,6 +105,9 @@ class ProjectConfig {
                 }
                 PROJECT_ID_BLESS -> {
                     FragmentBless()
+                }
+                PROJECT_ID_TAKERPROTOCOL_SOWING -> {
+                    FragmentTakerSowing()
                 }
                 else -> null
             }.apply {

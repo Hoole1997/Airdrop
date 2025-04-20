@@ -18,6 +18,8 @@ import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountDao
 import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 import com.web3.airdrop.project.somnia.bean.SomniaAccount
 import com.web3.airdrop.project.somnia.bean.SomniaDao
+import com.web3.airdrop.project.takersowing.data.TakerSowingUser
+import com.web3.airdrop.project.takersowing.db.TakerSowingDao
 
 @Database(
     entities = [
@@ -26,11 +28,13 @@ import com.web3.airdrop.project.somnia.bean.SomniaDao
         LayerEdgeAccountInfo::class,
         CoreSkyUser::class,
         TakerUser::class,
-        BlessNodeInfo::class],
-    version = 4,
+        BlessNodeInfo::class,
+        TakerSowingUser::class],
+    version = 5,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4),
+        AutoMigration(from = 4, to = 5),
     ]
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -46,6 +50,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun takerDao(): TakerProtocolDao
 
     abstract fun blessNodeDao(): BlessNodeDao
+
+    abstract fun takerSowingDao(): TakerSowingDao
 
     companion object {
         @Volatile
