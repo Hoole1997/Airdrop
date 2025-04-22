@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.web3.airdrop.base.BaseUser
 import com.web3.airdrop.data.Wallet
 
 @Entity(tableName = "TakerUser", indices = [Index(value = ["walletAddress"], unique = true)])
@@ -19,14 +20,9 @@ data class TakerUser(
     val dcId: String?,
     val twId: String?,
     val twName: String?
-) {
-    var token: String? = ""
-    var lastSyncTime: Long = 0L
+): BaseUser() {
     var lastMiningTime: Long = 0L
     var totalMiningTime: Long = 0L
-
-    @Ignore
-    var wallet: Wallet? = null
 
     constructor(localWallet: Wallet) : this(
         userId = 0L,
@@ -48,12 +44,12 @@ data class TakerUser(
     }
 
     @Ignore
-    fun getNewUser(user: TakerUser) : TakerUser {
-        user.wallet = wallet
-        user.token = token
-        user.lastSyncTime = System.currentTimeMillis()
-        user.lastMiningTime = lastMiningTime
-        user.totalMiningTime = totalMiningTime
+    fun getNewUser(user: TakerUser?) : TakerUser? {
+        user?.localWallet = localWallet
+        user?.token = token
+        user?.lastSyncTime = System.currentTimeMillis()
+        user?.lastMiningTime = lastMiningTime
+        user?.totalMiningTime = totalMiningTime
         return user
     }
 }

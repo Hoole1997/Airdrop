@@ -5,8 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.web3.airdrop.base.BaseService
 import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.project.ActivityProject
+import com.web3.airdrop.project.bless.data.BlessNodeInfo
 
-class BlessService : BaseService<BlessModel>() {
+class BlessService : BaseService<BlessModel, BlessNodeInfo>() {
 
     override fun initProjectInfo(): ProjectConfig.ProjectInfo {
         return ProjectConfig.projectData().first {

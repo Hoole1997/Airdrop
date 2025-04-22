@@ -6,8 +6,9 @@ import com.web3.airdrop.R
 import com.web3.airdrop.base.BaseService
 import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.project.ActivityProject
+import com.web3.airdrop.project.coresky.data.CoreSkyUser
 
-class CoreSkyService : BaseService<CoreSkyModel>() {
+class CoreSkyService : BaseService<CoreSkyModel, CoreSkyUser>() {
 
     override fun initProjectInfo(): ProjectConfig.ProjectInfo {
         return ProjectConfig.projectData().first {

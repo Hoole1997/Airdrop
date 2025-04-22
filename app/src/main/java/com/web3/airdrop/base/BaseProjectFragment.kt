@@ -12,30 +12,35 @@ import androidx.cardview.widget.CardView
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.blankj.utilcode.util.LogUtils
 import com.chad.library.adapter4.BaseDifferAdapter
-import com.chad.library.adapter4.dragswipe.QuickDragAndSwipe
-import com.chad.library.adapter4.dragswipe.listener.DragAndSwipeDataCallback
 import com.chad.library.adapter4.viewholder.DataBindingHolder
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.tabs.TabLayoutMediator
 import com.web3.airdrop.R
+import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.data.ProjectConfig.ProjectInfo
 import com.web3.airdrop.databinding.FragmentBaseProjectBinding
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBaseProjectBinding,VM>(){
+abstract class BaseProjectFragment<VM : BaseModel<USER>, USER: BaseUser> : BaseFragment<FragmentBaseProjectBinding,VM>(){
 
     lateinit var bottomSheetBehavior: BottomSheetBehavior<CardView>
 
     override fun initBinding(savedInstanceState: Bundle?): FragmentBaseProjectBinding {
         return FragmentBaseProjectBinding.inflate(layoutInflater)
     }
+    var isInit = false
 
+    open fun initProjectInfo() : ProjectInfo {
+        return arguments?.getSerializable("info") as ProjectInfo
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     override suspend fun initViewModel(): VM? {
-        if (BaseService.modelMap.get(initProjectInfo().projectId) == null) {
+        if (BaseService.modelMap[initProjectInfo().projectId] == null) {
             startTaskService()
             return suspendCancellableCoroutine { continuation ->
                 // 注册广播接收器
@@ -46,10 +51,10 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
                         context: Context?,
                         intent: Intent?
                     ) {
+                        if (isInit) return
                         if (intent?.action == createModelAction) {
-                            continuation.resume(BaseService.modelMap.get(initProjectInfo().projectId) as VM?,{
-
-                            })
+                            isInit = true
+                            continuation.resume(BaseService.modelMap[initProjectInfo().projectId] as VM?,null)
                         }
                     }
                 }
@@ -62,6 +67,7 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
                 // 取消时注销接收器
                 continuation.invokeOnCancellation {
                     activity?.unregisterReceiver(receiver)
+                    isInit = false
                 }
             }
         } else {
@@ -71,18 +77,9 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
 
     override fun initView(activity: FragmentActivity) {
         bottomSheetBehavior = BottomSheetBehavior.from(binding.bottomCard)
-        initProjectInfo().let {
-            binding.ivIcon.setImageResource(it.icon)
-            binding.tvDescribe.text = it.describe
-            binding.tvStar.text = it.star.toString()
-            binding.tvTwitter.text = it.twitterUrl
-            binding.tvWebsite.text = it.website
-            binding.toolBar.title = it.name
-            binding.toolBar.setNavigationOnClickListener {
-                activity.finish()
-            }
-            binding.clInfo.visibility = View.VISIBLE
-        }
+        
+        setProjectInfo()
+        
         binding.toolBar.inflateMenu(R.menu.menu_project)
         binding.toolBar.setOnMenuItemClickListener {
             if (it.itemId == R.id.menu_close) {
@@ -92,19 +89,33 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
             true
         }
     }
-
-    abstract fun initProjectInfo(): ProjectInfo
+    
+    private fun setProjectInfo() {
+        initProjectInfo().let {
+            model?.taskInfo?.postValue(it)
+            binding.ivIcon.setImageResource(it.icon)
+            binding.tvDescribe.text = it.describe
+            binding.tvStar.text = it.star.toString()
+            binding.tvTwitter.text = it.twitterUrl
+            binding.tvWebsite.text = it.website
+            binding.toolBar.title = it.name
+            binding.toolBar.setNavigationOnClickListener {
+                activity?.finish()
+            }
+            binding.clInfo.visibility = View.VISIBLE
+        }
+    }
 
     abstract fun startTaskService()
 
     abstract fun stopTaskService()
 
-    fun <INFo: Any,DB: ViewDataBinding> loadItemAccountModule(projectAccountModule : IProjectAccountModule<INFo,DB>) {
-        val adapter = object : BaseDifferAdapter<INFo, DataBindingHolder<DB>>(projectAccountModule.initDiffCallback()){
+    fun <DB: ViewDataBinding> loadItemAccountModule(projectAccountModule : IProjectAccountModule<USER,DB>) {
+        val adapter = object : BaseDifferAdapter<USER, DataBindingHolder<DB>>(projectAccountModule.initDiffCallback()){
             override fun onBindViewHolder(
                 holder: DataBindingHolder<DB>,
                 position: Int,
-                item: INFo?
+                item: USER?
             ) {
                 projectAccountModule.initItemView(item,position,holder.binding)
             }
@@ -112,7 +123,7 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
             override fun onBindViewHolder(
                 holder: DataBindingHolder<DB>,
                 position: Int,
-                item: INFo?,
+                item: USER?,
                 payloads: List<Any>
             ) {
                 super.onBindViewHolder(holder, position, item, payloads)
@@ -139,8 +150,8 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
     }
 
     fun loadTaskPanelModule(
-        accountInfoModule: IPanelAccountInfoModule<VM>?,
-        taskModule: IPanelTaskModule<VM>?
+        accountInfoModule: IPanelAccountInfoModule<VM,USER>?,
+        taskModule: IPanelTaskModule<VM,USER>?
     ) {
         val tabTitleList = mutableListOf<String>()
         val fragmentList = mutableListOf<Fragment>()
@@ -155,7 +166,7 @@ abstract class BaseProjectFragment<VM : BaseModel> : BaseFragment<FragmentBasePr
             fragmentList.add(it)
         }
         activity?.let {
-            IPanelLogModule<VM>(it,model).let {
+            IPanelLogModule<VM,USER>(it,model).let {
                 tabTitleList.add(it.initTabName())
                 it.initFragment()?.let {
                     fragmentList.add(it)

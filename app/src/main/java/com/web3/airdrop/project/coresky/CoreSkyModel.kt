@@ -16,6 +16,8 @@ import com.web3.airdrop.data.Wallet
 import com.web3.airdrop.extension.Extension.formatAddress
 import com.web3.airdrop.extension.Web3Utils
 import com.web3.airdrop.extension.setProxy
+import com.web3.airdrop.project.TakerProtocol.data.TakerUser
+import com.web3.airdrop.project.bless.data.BlessNodeInfo
 import com.web3.airdrop.project.coresky.data.CoreSkyConverter
 import com.web3.airdrop.project.coresky.data.CoreSkyUser
 import com.web3.airdrop.project.coresky.data.LoginResult
@@ -24,6 +26,7 @@ import com.web3.airdrop.project.coresky.data.SignResult
 import com.web3.airdrop.project.coresky.db.CoreSkyDao
 import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 import com.web3.airdrop.project.log.LogData
+import com.web3.airdrop.project.takersowing.data.TakerSowingUser
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -35,7 +38,7 @@ import kotlin.random.Random
 import kotlin.random.nextInt
 import kotlin.random.nextLong
 
-class CoreSkyModel : BaseModel() {
+class CoreSkyModel : BaseModel<CoreSkyUser>() {
 
     companion object {
         fun getHeader(token: String?, requestUrl: String): Headers {
@@ -65,57 +68,8 @@ class CoreSkyModel : BaseModel() {
         }
     }
 
-    val walletAccountEvent = MutableLiveData<MutableList<CoreSkyUser>>(mutableListOf())
-
-    fun refreshLocalWallet() {
-        viewModelScope.launch() {
-            val ethWallet = AppDatabase.getDatabase().walletDao().getWalletsByChain("ETH")
-
-            val list = mutableListOf<CoreSkyUser>()
-            ethWallet.forEach { localInfo ->
-                val dbUser = AppDatabase.getDatabase().coreSkyDao()
-                    .getAccountByAddress(localInfo.address.lowercase())
-                if (dbUser != null) {
-                    list.add(dbUser.apply {
-                        wallet = localInfo
-                    })
-                } else {
-                    list.add(CoreSkyUser(localInfo).apply {
-                        wallet = localInfo
-                    })
-                }
-            }
-            walletAccountEvent.postValue(list)
-        }
-    }
-
-    override fun refreshPanelAccountInfo(data: Any, online: Boolean) {
-        super.refreshPanelAccountInfo(data, online)
-        if (data is CoreSkyUser) {
-            postPanelAccount(data)
-            if (!online) return
-            requestDetail(data)
-        }
-    }
-
-    private fun postPanelAccount(data: CoreSkyUser) {
-        panelAccountInfo.postValue(mutableListOf<Pair<String, String>>().apply {
-            val jsonString = GsonUtils.toJson(data)
-            val json = JSONObject(jsonString)
-            add(Pair("地址", data.wallet?.address?.formatAddress().toString()))
-            add(Pair("注册", (data.id > 0).toString()))
-            add(
-                Pair(
-                    "最近更新",
-                    if (data.lastSyncTime == 0L) "未同步" else TimeUtils.getFriendlyTimeSpanByNow(
-                        data.lastSyncTime
-                    )
-                )
-            )
-            json.keys().forEach {
-                add(Pair(it, json.opt(it).toString()))
-            }
-        })
+    override suspend fun getAccountByAddress(address: String): CoreSkyUser? {
+        return AppDatabase.getDatabase().coreSkyDao().getAccountByAddress(address)
     }
 
     private suspend fun apiLogin(user: CoreSkyUser): LoginResult? {
@@ -129,17 +83,17 @@ class CoreSkyModel : BaseModel() {
                 "\n" +
                 "Wallet address:\n" +
                 "\n" +
-                "${user.wallet?.address}"
+                "${user.localWallet?.address}"
         return Net.post("https://www.coresky.com/api/user/login", block = {
-            val signature = Web3Utils.signPrefixedMessage(message, user.wallet?.privateKey)
+            val signature = Web3Utils.signPrefixedMessage(message, user.localWallet?.privateKey)
             json(
-                "address" to user.wallet?.address,
+                "address" to user.localWallet?.address,
                 "projectId" to "",
                 "refCode" to "",
                 "signature" to signature
             )
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(null, "https://www.coresky.com/tasks-rewards"))
             converter = CoreSkyConverter()
@@ -147,7 +101,7 @@ class CoreSkyModel : BaseModel() {
             if (isSuccess && this.getOrNull() != null) {
                 val resultUser = this.getOrNull()!!.user
                 resultUser.lastSyncTime = System.currentTimeMillis()
-                resultUser.wallet = user.wallet
+                resultUser.localWallet = user.localWallet
                 resultUser.token = this.getOrNull()!!.token
                 user.token = this.getOrNull()!!.token
                 user.lastSyncTime = System.currentTimeMillis()
@@ -156,7 +110,7 @@ class CoreSkyModel : BaseModel() {
                     val findIndex = it.indexOfFirst {
                         it.address == user.address
                     }
-                    resultUser.wallet = user.wallet
+                    resultUser.localWallet = user.localWallet
                     val newList = it.toMutableList().apply {
                         if (findIndex < this.size && findIndex >= 0) {
                             set(findIndex, resultUser)
@@ -175,7 +129,7 @@ class CoreSkyModel : BaseModel() {
     private suspend fun apiToken(user: CoreSkyUser): CoreSkyUser? {
         return Net.post("https://www.coresky.com/api/user/token", block = {
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(user.token, "https://www.coresky.com/tasks-rewards"))
             converter = CoreSkyConverter()
@@ -184,14 +138,14 @@ class CoreSkyModel : BaseModel() {
             if (isSuccess && it != null) {
                 val loginUser = it
                 loginUser.lastSyncTime = System.currentTimeMillis()
-                loginUser.wallet = user.wallet
+                loginUser.localWallet = user.localWallet
                 loginUser.token = user.token
                 AppDatabase.getDatabase().coreSkyDao().insertOrUpdate(loginUser)
                 walletAccountEvent.value?.let {
                     val findIndex = it.indexOfFirst {
                         it.address == user.address
                     }
-                    loginUser.wallet = user.wallet
+                    loginUser.localWallet = user.localWallet
                     val newList = it.toMutableList().apply {
                         if (findIndex < this.size && findIndex >= 0) {
                             set(findIndex, loginUser)
@@ -218,7 +172,7 @@ class CoreSkyModel : BaseModel() {
         }
         return Net.post("https://www.coresky.com/api/taskwall/meme/sign", block = {
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(user.token, "https://www.coresky.com/api/taskwall/meme/sign"))
             converter = CoreSkyConverter()
@@ -235,12 +189,12 @@ class CoreSkyModel : BaseModel() {
     private suspend fun apiScoreDetail(user: CoreSkyUser): Boolean {
         val result = Net.post("https://www.coresky.com/api/user/score/detail", block = {
             json(
-                "address" to user.wallet?.address,
+                "address" to user.localWallet?.address,
                 "limit" to 10,
                 "page" to 1
             )
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(user.token, "https://www.coresky.com/tasks-rewards"))
             converter = CoreSkyConverter()
@@ -283,7 +237,7 @@ class CoreSkyModel : BaseModel() {
                 "voteNum" to voteNum
             )
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(user.token, "https://www.coresky.com/meme"))
             converter = CoreSkyConverter()
@@ -298,84 +252,72 @@ class CoreSkyModel : BaseModel() {
         }
     }
 
-    override fun startTask(panelTask: List<IPanelTaskModule.PanelTask>) {
-        super.startTask(panelTask)
-
-        val accountList : List<CoreSkyUser> = if (globalMode.value == true) {
-            walletAccountEvent.value
-        } else {
-            arrayListOf<CoreSkyUser>(panelCurrentAccountInfo.value as CoreSkyUser)
-        } ?: return
-
-        scopeNetLife(Dispatchers.IO) {
-            accountList.forEachIndexed {index, account ->
-                runCatching {
-                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.SUCCESS,account.address.formatAddress(),""))
-                    if (!account.isLogin()) {
-                        account.token = apiLogin(account)?.token
-                    }
-                    panelTask.apply {
-                        if (randomMode.value == true) {
-                            shuffled()
+    override suspend fun doTask(accountList:List<CoreSkyUser>, panelTask: List<IPanelTaskModule.PanelTask>) {
+        accountList.forEachIndexed {index, account ->
+            if (taskStart.value == false) {
+                return@forEachIndexed
+            }
+            runCatching {
+                sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.SUCCESS,account.address.formatAddress(),""))
+                if (!account.isLogin()) {
+                    account.token = apiLogin(account)?.token
+                }
+                panelTask.shuffled().apply {
+                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"开始任务:${this.map { it.taskName }}"))
+                    delay(1500)
+                }.forEachIndexed { index,task ->
+                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"开始-- ${task.taskName}"))
+                    when(task.taskName) {
+                        "每日签到" -> {
+                            apiSign(account)
                         }
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"开始任务:${this.map { it.taskName }}"))
-                        delay(1500)
-                    }.forEachIndexed { index,task ->
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"开始-- ${task.taskName}"))
-                        when(task.taskName) {
-                            "每日签到" -> {
-                                apiSign(account)
-                            }
-                            "抽奖" -> {
-                                delay(1000)
-                                sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.WARN,account.address.formatAddress(),"${task.taskName}开发中"))
-                            }
-                            "MEME投票" -> {
-                                apiVote(account)
-                            }
+                        "抽奖" -> {
+                            delay(1000)
+                            sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.WARN,account.address.formatAddress(),"${task.taskName}开发中"))
                         }
-                        val delayTime = Random.nextLong(5000, 15000)
-
-                        if (index == panelTask.size-1) {
-                            delay(1000)
-                            sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"${task.taskName}完成"))
-                            delay(1000)
-                        } else {
-                            sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"${task.taskName}完成，等待${delayTime/1000}秒"))
-                            delay(delayTime)
+                        "MEME投票" -> {
+                            apiVote(account)
                         }
                     }
-                    if (index < accountList.size-1) {
-                        val delayTime = Random.nextLong(5000, 21000)
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"全部任务完成，${index+1}/${accountList.size}，等待${delayTime/1000}秒"))
+                    val delayTime = Random.nextLong(5000, 15000)
+
+                    if (index == panelTask.size-1) {
+                        delay(1000)
+                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"${task.taskName}完成"))
+                        delay(1000)
+                    } else {
+                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"${task.taskName}完成，等待${delayTime/1000}秒"))
                         delay(delayTime)
                     }
-                }.onFailure {
-                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.ERROR,account.address.formatAddress(),"异常 ${it.message}"))
                 }
-
+                if (index < accountList.size-1) {
+                    val delayTime = Random.nextLong(5000, 21000)
+                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.NORMAL,account.address.formatAddress(),"全部任务完成，${index+1}/${accountList.size}，等待${delayTime/1000}秒"))
+                    delay(delayTime)
+                }
+            }.onFailure {
+                sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_CORESKY, LogData.Level.ERROR,account.address.formatAddress(),"异常 ${it.message}"))
             }
 
         }
     }
 
-    private fun requestDetail(user: CoreSkyUser) {
+    override fun requestDetail(user: CoreSkyUser) {
         scopeNetLife(Dispatchers.IO) {
-
             runCatching {
                 if (!user.isLogin()) {
                     apiLogin(user)?.let {
                         user.token = it.token
                         val loginUser = it.user
                         loginUser.lastSyncTime = System.currentTimeMillis()
-                        loginUser.wallet = user.wallet
+                        loginUser.localWallet = user.localWallet
                         loginUser.token = it.token
                         AppDatabase.getDatabase().coreSkyDao().insertOrUpdate(loginUser)
                         walletAccountEvent.value?.let {
                             val findIndex = it.indexOfFirst {
                                 it.address == user.address
                             }
-                            loginUser.wallet = user.wallet
+                            loginUser.localWallet = user.localWallet
                             val newList = it.toMutableList().apply {
                                 if (findIndex < this.size && findIndex >= 0) {
                                     set(findIndex, loginUser)
@@ -389,7 +331,7 @@ class CoreSkyModel : BaseModel() {
                 apiToken(user)?.let {
                     val apiUser = it
                     apiUser.token = user.token
-                    apiUser.wallet = user.wallet
+                    apiUser.localWallet = user.localWallet
                     apiUser.lastSyncTime = System.currentTimeMillis()
                     AppDatabase.getDatabase().coreSkyDao().insertOrUpdate(apiUser)
                     postPanelAccount(apiUser)
@@ -397,7 +339,7 @@ class CoreSkyModel : BaseModel() {
                         val findIndex = it.indexOfFirst {
                             it.address == user.address
                         }
-                        apiUser.wallet = user.wallet
+                        apiUser.localWallet = user.localWallet
                         val newList = it.toMutableList().apply {
                             if (findIndex < this.size && findIndex >= 0) {
                                 set(findIndex, apiUser)

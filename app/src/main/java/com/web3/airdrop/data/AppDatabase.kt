@@ -30,12 +30,13 @@ import com.web3.airdrop.project.takersowing.db.TakerSowingDao
         TakerUser::class,
         BlessNodeInfo::class,
         TakerSowingUser::class],
-    version = 5,
+    version = 1,
     exportSchema = true,
-    autoMigrations = [
-        AutoMigration(from = 3, to = 4),
-        AutoMigration(from = 4, to = 5),
-    ]
+//    autoMigrations = [
+//        AutoMigration(from = 3, to = 4),
+//        AutoMigration(from = 4, to = 5),
+//        AutoMigration(from = 5, to = 6),
+//    ]
 )
 abstract class AppDatabase : RoomDatabase() {
 
@@ -59,40 +60,11 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    Utils.getApp(), AppDatabase::class.java, "app_database"
-                ).addMigrations(MIGRATION_2_3)
+                val instance = Room.databaseBuilder(Utils.getApp(), AppDatabase::class.java, "app_database")
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
-            }
-        }
-
-        val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // 如果表不存在，创建表
-                database.execSQL("""
-            CREATE TABLE IF NOT EXISTS `TakerUser` (
-                `walletAddress` TEXT NOT NULL PRIMARY KEY,
-                `dcId` TEXT,
-                `invitationCode` TEXT NOT NULL,
-                `invitationReward` TEXT NOT NULL,
-                `inviteCount` INTEGER NOT NULL,
-                `lastMiningTime` INTEGER NOT NULL,
-                `lastSyncTime` INTEGER NOT NULL,
-                `rewardAmount` TEXT NOT NULL,
-                `tgId` TEXT,
-                `token` TEXT,
-                `totalMiningTime` INTEGER NOT NULL,
-                `totalReward` TEXT NOT NULL,
-                `twId` TEXT,
-                `twName` TEXT,
-                `userId` INTEGER NOT NULL
-            )
-        """)
-
-                // 创建索引
-                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_TakerUser_walletAddress` ON `TakerUser` (`walletAddress`)")
             }
         }
 

@@ -8,24 +8,20 @@ import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewModel
 import com.blankj.utilcode.util.BarUtils
 
-abstract class BaseActivity<V : ViewDataBinding, VM : ViewModel> : AppCompatActivity() {
+abstract class BaseActivity<V : ViewDataBinding> : AppCompatActivity() {
 
     open lateinit var binding: V
-    open lateinit var model: VM
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = initBinding(savedInstanceState)
         setContentView(binding.root)
-        model = initViewModel()
         initView()
     }
 
     abstract fun initBinding(savedInstanceState: Bundle?): V
 
     abstract fun initView()
-
-    abstract fun initViewModel(): VM
 
     @SuppressLint("RestrictedApi")
     open fun useDefaultToolbar(toolbar: Toolbar, title: String) {

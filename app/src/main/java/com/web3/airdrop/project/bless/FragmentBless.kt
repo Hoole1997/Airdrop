@@ -8,14 +8,7 @@ import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.databinding.ItemBlessWalletBinding
 import com.web3.airdrop.project.bless.data.BlessNodeInfo
 
-class FragmentBless: BaseProjectFragment<BlessModel>() {
-
-    lateinit var info: ProjectConfig.ProjectInfo
-
-    override fun initProjectInfo(): ProjectConfig.ProjectInfo {
-        info = arguments?.getSerializable("info") as ProjectConfig.ProjectInfo
-        return info
-    }
+class FragmentBless: BaseProjectFragment<BlessModel, BlessNodeInfo>() {
 
     override fun startTaskService() {
         activity?.let {
@@ -33,10 +26,10 @@ class FragmentBless: BaseProjectFragment<BlessModel>() {
         super.initView(activity)
 
         loadTaskPanelModule(
-            accountInfoModule = IPanelAccountInfoModule<BlessModel>(activity,model),
+            accountInfoModule = IPanelAccountInfoModule<BlessModel, BlessNodeInfo>(activity,model),
             taskModule = FragmentBlessPanelTask(activity,model)
         )
-        loadItemAccountModule<BlessNodeInfo, ItemBlessWalletBinding>(BlessNodeListModule(activity, binding.rvAccount,model))
+        loadItemAccountModule<ItemBlessWalletBinding>(BlessNodeListModule(activity, binding.rvAccount,model))
     }
 
 }

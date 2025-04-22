@@ -2,6 +2,7 @@ package com.web3.airdrop.project
 
 import android.os.Bundle
 import android.view.Menu
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.blankj.utilcode.util.BarUtils
 import com.google.android.material.color.MaterialColors
@@ -11,7 +12,7 @@ import com.web3.airdrop.base.BaseModel
 import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.databinding.ActivityProjectBinding
 
-class ActivityProject : BaseActivity<ActivityProjectBinding, BaseModel>() {
+class ActivityProject : BaseActivity<ActivityProjectBinding>() {
     override fun initBinding(savedInstanceState: Bundle?): ActivityProjectBinding {
         return ActivityProjectBinding.inflate(layoutInflater)
     }
@@ -26,9 +27,5 @@ class ActivityProject : BaseActivity<ActivityProjectBinding, BaseModel>() {
                 .replace(R.id.page_content,it)
                 .commit()
         }
-    }
-
-    override fun initViewModel(): BaseModel {
-        return ViewModelProvider(this)[BaseModel::class.java]
     }
 }

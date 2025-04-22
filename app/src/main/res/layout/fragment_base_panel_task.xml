@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
@@ -14,53 +15,59 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="vertical" >
 
             <com.google.android.material.switchmaterial.SwitchMaterial
                 android:id="@+id/switch_all"
-                android:text="全局模式"
-                android:textSize="18sp"
+                android:text="全局模式(开启所有账号执行)"
+                android:textSize="14sp"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
                 android:drawablePadding="10dp"
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/switch_random"
-                android:text="随机执行"
-                android:textSize="18sp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:drawablePadding="10dp"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/switch_combination"
-                android:text="组合执行"
-                android:textSize="18sp"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:drawablePadding="10dp"
-                android:layout_width="0dp"
-                android:layout_weight="1"
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_timing"
+                    android:text="定时执行(每隔小时执行)"
+                    android:textSize="14sp"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:drawablePadding="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <EditText
+                    android:id="@+id/et_task_timing"
+                    android:text="0"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:imeOptions="actionGo"
+                    android:background="@drawable/bg_wallet_import_edit"
+                    android:layout_marginEnd="10dp"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="match_parent"/>
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_start"
+                android:text="Start(多任务间隔随机5-20秒)"
+                android:visibility="visible"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
         </LinearLayout>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_start"
-            android:text="Start(多任务间隔随机5-20秒)"
-            android:visibility="gone"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="5dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_account_info"

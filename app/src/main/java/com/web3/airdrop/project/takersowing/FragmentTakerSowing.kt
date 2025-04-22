@@ -15,13 +15,9 @@ import com.web3.airdrop.project.TakerProtocol.data.TakerUser
 import com.web3.airdrop.project.takersowing.data.TakerSowingUser
 
 
-class FragmentTakerSowing : BaseProjectFragment<TakerSowingModel>() {
+class FragmentTakerSowing : BaseProjectFragment<TakerSowingModel, TakerSowingUser>() {
 
     var accountModule: TakerSowingAccountModule? = null
-
-    override fun initProjectInfo(): ProjectConfig.ProjectInfo {
-        return arguments?.getSerializable("info") as ProjectConfig.ProjectInfo
-    }
 
     override fun startTaskService() {
         activity?.let {
@@ -43,17 +39,19 @@ class FragmentTakerSowing : BaseProjectFragment<TakerSowingModel>() {
         super.initView(activity)
 
         loadTaskPanelModule(
-            accountInfoModule = IPanelAccountInfoModule<TakerSowingModel>(activity,model),
+            accountInfoModule = IPanelAccountInfoModule<TakerSowingModel, TakerSowingUser>(activity,model),
             taskModule = FragmentTakerSowingPanelTask(activity, model)
         )
 
         accountModule = TakerSowingAccountModule(activity, binding.rvAccount).apply {
-            loadItemAccountModule<TakerSowingUser, ItemTakerProtocolWalletBinding>(this)
+            loadItemAccountModule<ItemTakerProtocolWalletBinding>(this)
         }
         model?.walletAccountEvent?.observe(this) {
             accountModule?.refreshData(it)
         }
-        model?.refreshLocalWallet()
+        model?.refreshLocalWallet(creator = {
+            TakerSowingUser(it)
+        })
     }
 
 }

@@ -13,12 +13,7 @@ import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.extension.Extension.formatAddress
 import com.web3.airdrop.extension.Web3Utils
 import com.web3.airdrop.extension.setProxy
-import com.web3.airdrop.project.TakerProtocol.TakerConverter
 import com.web3.airdrop.project.TakerProtocol.TakerModel
-import com.web3.airdrop.project.TakerProtocol.data.TakerGenerateNonceResult
-import com.web3.airdrop.project.TakerProtocol.data.TakerLoginResult
-import com.web3.airdrop.project.TakerProtocol.data.TakerUser
-import com.web3.airdrop.project.TakerProtocol.data.TaskStateResult
 import com.web3.airdrop.project.log.LogData
 import com.web3.airdrop.project.takersowing.data.TakerSowingLoginResult
 import com.web3.airdrop.project.takersowing.data.TakerSowingNonceResult
@@ -29,9 +24,22 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.Headers
 import org.json.JSONObject
+import org.web3j.abi.FunctionEncoder
+import org.web3j.abi.datatypes.Function
+import org.web3j.crypto.Credentials
+import org.web3j.crypto.RawTransaction
+import org.web3j.crypto.TransactionEncoder
+import org.web3j.protocol.Web3j
+import org.web3j.protocol.core.DefaultBlockParameterName
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt
+import org.web3j.protocol.core.methods.response.EthSendTransaction
+import org.web3j.protocol.core.methods.response.TransactionReceipt
+import org.web3j.protocol.http.HttpService
+import org.web3j.utils.Numeric
+import java.math.BigInteger
 import kotlin.random.Random
 
-class TakerSowingModel : BaseModel() {
+class TakerSowingModel : BaseModel<TakerSowingUser>() {
 
     companion object {
         fun getHeader(token: String?, requestUrl: String,turnstile: String? = null): Headers {
@@ -64,60 +72,11 @@ class TakerSowingModel : BaseModel() {
         }
     }
 
-    val walletAccountEvent = MutableLiveData<MutableList<TakerSowingUser>>(mutableListOf())
-
-    fun refreshLocalWallet() {
-        viewModelScope.launch() {
-            val ethWallet = AppDatabase.getDatabase().walletDao().getWalletsByChain("ETH")
-
-            val list = mutableListOf<TakerSowingUser>()
-            ethWallet.forEach { localInfo ->
-                val dbUser = AppDatabase.getDatabase().takerSowingDao()
-                    .getAccountByAddress(localInfo.address.lowercase())
-                if (dbUser != null) {
-                    list.add(dbUser.apply {
-                        wallet = localInfo
-                    })
-                } else {
-                    list.add(TakerSowingUser(localInfo).apply {
-                        wallet = localInfo
-                    })
-                }
-            }
-            walletAccountEvent.postValue(list)
-        }
+    override suspend fun getAccountByAddress(address: String): TakerSowingUser? {
+        return AppDatabase.getDatabase().takerSowingDao().getAccountByAddress(address.lowercase())
     }
 
-    override fun refreshPanelAccountInfo(data: Any, online: Boolean) {
-        super.refreshPanelAccountInfo(data, online)
-        if (data is TakerSowingUser) {
-            postPanelAccount(data)
-            if (!online) return
-            requestDetail(data)
-        }
-    }
-
-    private fun postPanelAccount(data: TakerSowingUser) {
-        panelAccountInfo.postValue(mutableListOf<Pair<String, String>>().apply {
-            val jsonString = GsonUtils.toJson(data)
-            val json = JSONObject(jsonString)
-            add(Pair("地址", data.wallet?.address?.formatAddress().toString()))
-            add(Pair("注册", (data.isRegister()).toString()))
-            add(
-                Pair(
-                    "最近更新",
-                    if (data.lastSyncTime == 0L) "未同步" else TimeUtils.getFriendlyTimeSpanByNow(
-                        data.lastSyncTime
-                    )
-                )
-            )
-            json.keys().forEach {
-                add(Pair(it, json.opt(it).toString()))
-            }
-        })
-    }
-
-    private fun requestDetail(user: TakerSowingUser) {
+    override fun requestDetail(user: TakerSowingUser) {
         scopeNetLife(Dispatchers.IO) {
             runCatching {
                 apiUserInfo(user)
@@ -127,109 +86,104 @@ class TakerSowingModel : BaseModel() {
         }
     }
 
-    override fun startTask(panelTask: List<IPanelTaskModule.PanelTask>) {
-        super.startTask(panelTask)
+    override suspend fun doTask(accountList:List<TakerSowingUser>, panelTask: List<IPanelTaskModule.PanelTask>) {
+        accountList.forEachIndexed {index, account ->
+            if (taskStart.value == false) {
+                return@forEachIndexed
+            }
+            runCatching {
+                val user = apiUserInfo(account)
+                val userTask = apiTaskList(user) ?:return@runCatching
 
-        val accountList : List<TakerSowingUser> = if (globalMode.value == true) {
-            walletAccountEvent.value
-        } else {
-            arrayListOf<TakerSowingUser>(panelCurrentAccountInfo.value as TakerSowingUser)
-        } ?: return
-
-        scopeNetLife(Dispatchers.IO) {
-            accountList.forEachIndexed {index, account ->
-                runCatching {
-                    if (!account.isLogin()) {
-                        account.token = apiLogin(account)
-                        account.lastSyncTime = System.currentTimeMillis()
-                    }
-                    val userTask = apiTaskList(account)
-                    panelTask.filter { task ->
-                        userTask.find {
-                            task.taskName == it.name && it.taskStatus == 2
-                        } == null
-                    }.apply {
-                        if (randomMode.value == true) {
-                            shuffled()
-                        }
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.NORMAL,account.walletAddress.formatAddress(),"开始任务:${this.map { it.taskName }}"))
-                        delay(1500)
-                    }.forEachIndexed { index,task ->
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.NORMAL,account.walletAddress.formatAddress(),"开始-- ${task.taskName}"))
-                        when(task.taskName) {
-                            "每日签到" -> {
-                                apiSign(account)
-                            }
-                            "BTC Basics Q&A" -> {
-                                apiQuestionsTask(account,6)
-                            }
-                        }
-                        val delayTime = Random.nextLong(5000, 15000)
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.NORMAL,account.walletAddress.formatAddress(),"${task.taskName}完成，等待${delayTime/1000}秒"))
-                        delay(delayTime)
-                    }
-                    if (index < accountList.size-1) {
-                        val delayTime = Random.nextLong(5000, 21000)
-                        sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.NORMAL,account.walletAddress.formatAddress(),"全部任务完成，${index+1}/${accountList.size}，等待${delayTime/1000}秒"))
-                        delay(delayTime)
-                    }
-                }.onFailure {
-                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.ERROR,account.walletAddress.formatAddress(),"异常 ${it.message}"))
+                val taskList = panelTask.shuffled().filter { task ->
+                    userTask.find {
+                        task.taskName == it.name && (it.taskStatus == 2 || System.currentTimeMillis() >= TimeUtils.string2Millis(it.endTime))
+                    } == null
+                }.apply {
+                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.NORMAL,account.walletAddress.formatAddress(),"开始任务:${this.map { it.taskName }}"))
                 }
-
+                taskList.forEachIndexed { index,task ->
+                    sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.NORMAL,account.walletAddress.formatAddress(),"开始-- ${task.taskName}"))
+                    when(task.taskName) {
+                        "每日签到" -> {
+                            apiSign(user)
+                        }
+                        "BTC Basics Q&A" -> {
+                            apiQuestionsTask6(user,6)
+                        }
+                    }
+                    val isLastTask = index == taskList.size -1
+                    if (!isLastTask && taskList.size>1) {
+                        val delayTime = Random.nextLong(2000, 5000)
+                        delay(delayTime)
+                    }
+                }
+                sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.NORMAL,account.walletAddress.formatAddress(),"全部任务完成，${index+1}/${accountList.size}"))
+            }.onFailure {
+                sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.ERROR,account.walletAddress.formatAddress(),"异常 ${it.message}"))
+                it.printStackTrace()
             }
 
         }
-
     }
 
-    private suspend fun apiTaskList(user: TakerSowingUser) : List<TaskSowingTaskResult> {
-        return Net.get("https://sowing-api.taker.xyz/task/list?walletAddress=${user.wallet?.address}", block = {
+    private suspend fun apiTaskList(user: TakerSowingUser) : List<TaskSowingTaskResult>? {
+        return Net.get("https://sowing-api.taker.xyz/task/list?walletAddress=${user.localWallet?.address}", block = {
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(TakerModel.Companion.getHeader(user.token, "https://sowing.taker.xyz/"))
             converter = TakerSowingConverter()
-        }).toResult<List<TaskSowingTaskResult>>().getOrNull() ?: arrayListOf()
+        }).toResult<List<TaskSowingTaskResult>>().getOrNull()
     }
 
-    private suspend fun apiUserInfo(user: TakerSowingUser) : TakerSowingUser? {
-        if (!user.isLogin()) {
+    private suspend fun apiUserInfo(user: TakerSowingUser) : TakerSowingUser {
+        //第一次登录
+        if (!user.isRegister()) {
             user.token = apiLogin(user)
-            if (user.token?.isNullOrBlank() == true) {
-                return null
-            }
         }
 
-        val userResult = Net.get("https://sowing-api.taker.xyz/user/info", block = {
-            setClient {
-                setProxy(user.wallet?.proxy)
-            }
-            setHeaders(getHeader(user.token, "https://sowing.taker.xyz/"))
-            converter = TakerSowingConverter()
-        }).toResult<TakerSowingUser>().getOrNull()
-
-        if (userResult != null) {
-            val newUser = user.getNewUser(userResult)
-            AppDatabase.getDatabase().takerSowingDao().insertOrUpdate(newUser)
-            walletAccountEvent.value?.let {
-                val findIndex = it.indexOfFirst {
-                    it.walletAddress == user.walletAddress
+        val userRequest: (String?) -> TakerSowingUser? = { token ->
+            Net.get("https://sowing-api.taker.xyz/user/info", block = {
+                setClient {
+                    setProxy(user.localWallet?.proxy)
                 }
-                val newList = it.toMutableList().apply {
-                    if (findIndex < this.size && findIndex >= 0) {
-                        set(findIndex, newUser)
+                setHeaders(getHeader(token, "https://sowing.taker.xyz/"))
+                converter = TakerSowingConverter()
+            }).toResult<TakerSowingUser>().getOrNull()
+        }
+
+        //接口报错重新登录
+        var result = userRequest.invoke(user.token)
+        if (result == null) {
+            user.token = apiLogin(user)
+            result = userRequest.invoke(user.token)
+        }
+
+        val checkResult : (TakerSowingUser?) -> TakerSowingUser = { userResult ->
+            if (userResult != null) {
+                val newUser = user.getNewUser(userResult)
+                AppDatabase.getDatabase().takerSowingDao().insertOrUpdate(newUser)
+                walletAccountEvent.value?.let {
+                    val findIndex = it.indexOfFirst {
+                        it.walletAddress == user.walletAddress
                     }
+                    val newList = it.toMutableList().apply {
+                        if (findIndex < this.size && findIndex >= 0) {
+                            set(findIndex, newUser)
+                        }
+                    }
+                    walletAccountEvent.postValue(newList)
                 }
-                walletAccountEvent.postValue(newList)
+                postPanelAccount(newUser)
+                newUser.canSign = kotlin.math.abs(System.currentTimeMillis() - newUser.nextTimestamp) <= 20_000
+                newUser
+            } else {
+                user
             }
-            postPanelAccount(newUser)
-            sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.SUCCESS,user.walletAddress.formatAddress(),"获取用户信息成功"))
-            return newUser
-        } else {
-            sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.ERROR,user.walletAddress.formatAddress(),"获取用户信息失败"))
-            return null
         }
+
+        return checkResult.invoke(result)
     }
 
     private suspend fun apiLogin(user: TakerSowingUser): String? {
@@ -237,10 +191,10 @@ class TakerSowingModel : BaseModel() {
         var message = ""
         Net.post("https://sowing-api.taker.xyz/wallet/generateNonce", block = {
             json(
-                "walletAddress" to user.wallet?.address
+                "walletAddress" to user.localWallet?.address
             )
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(null, "https://sowing.taker.xyz/"))
             converter = TakerSowingConverter()
@@ -252,15 +206,15 @@ class TakerSowingModel : BaseModel() {
         if (message.isBlank()) return null
 
         val loginResult = Net.post("https://sowing-api.taker.xyz/wallet/login", block = {
-            val signature = Web3Utils.signPrefixedMessage(message, user.wallet?.privateKey)
+            val signature = Web3Utils.signPrefixedMessage(message, user.localWallet?.privateKey)
             json(
-                "address" to user.wallet?.address,
+                "address" to user.localWallet?.address,
                 "message" to message,
                 "signature" to signature,
                 "invitationCode" to "181GVE62"
             )
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(TakerModel.Companion.getHeader(null, "https://sowing.taker.xyz/"))
             converter = TakerSowingConverter()
@@ -279,27 +233,42 @@ class TakerSowingModel : BaseModel() {
     }
 
     private suspend fun apiSign(user: TakerSowingUser) {
+        if (!user.canSign) {
+            sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.WARN,user.walletAddress.formatAddress(),"未到签到时间 下次签到时间：${TimeUtils.millis2String(user.nextTimestamp)}"))
+            return
+        }
         val verifyToken = apiVerifyResp("https://sowing.taker.xyz/")
         if (verifyToken.isBlank()) {
             return
         }
-        Net.get("https://sowing-api.taker.xyz/task/signIn?status=true", block = {
+        var hash: String? = ""
+        if (!user.firstSign) {
+            hash = chainActive(user)
+            if (hash.isNullOrEmpty() == true) {
+                sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.ERROR,user.walletAddress.formatAddress(),"链上active 失败"))
+                return
+            } else {
+                sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.SUCCESS,user.walletAddress.formatAddress(),"链上active 成功 $hash"))
+            }
+        }
+        Net.get("https://sowing-api.taker.xyz/task/signIn?status=${hash.isNullOrBlank()}", block = {
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(user.token, "https://sowing.taker.xyz/",verifyToken))
         }).toResult<String>().apply {
             JSONObject(getOrNull()).apply {
-                if (optInt("code") == 200) {
-                    sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.SUCCESS,user.walletAddress.formatAddress(),"签到成功"))
-                } else {
-                    sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.SUCCESS,user.walletAddress.formatAddress(),"签到失败"))
-                }
+//                if (optInt("code") == 200) {
+//
+//                } else {
+//                    sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.SUCCESS,user.walletAddress.formatAddress(),"签到失败"))
+//                }
+                sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.SUCCESS,user.walletAddress.formatAddress(),"签到成功"))
             }
         }
     }
 
-    private suspend fun apiQuestionsTask(user: TakerSowingUser,taskId:Int) {
+    private suspend fun apiQuestionsTask6(user: TakerSowingUser, taskId:Int) {
         val checkAnswer: (Int, Array<String>) -> Result<Boolean> = { taskEventId, answerList ->
             Net.post("https://sowing-api.taker.xyz/task/check", block = {
                 json(
@@ -308,7 +277,7 @@ class TakerSowingModel : BaseModel() {
                     "answerList" to answerList
                 )
                 setClient {
-                    setProxy(user.wallet?.proxy)
+                    setProxy(user.localWallet?.proxy)
                 }
                 setHeaders(getHeader(user.token, "https://sowing.taker.xyz/detail/$taskId"))
                 converter = TakerSowingConverter()
@@ -325,7 +294,7 @@ class TakerSowingModel : BaseModel() {
         val verify = apiVerifyResp("https://sowing.taker.xyz/detail/$taskId")
         Net.post("https://sowing-api.taker.xyz/task/claim-reward?taskId=$taskId", block = {
             setClient {
-                setProxy(user.wallet?.proxy)
+                setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(user.token, "https://sowing.taker.xyz/detail/$taskId",verify))
         }).toResult<String>()
@@ -358,6 +327,128 @@ class TakerSowingModel : BaseModel() {
             sendLog(LogData(projectId = ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING, LogData.Level.ERROR,"","识别验证码失败"))
         }
         return verifyResp
+    }
+
+    private suspend fun chainActive(user: TakerSowingUser): String? {
+        // 连接到节点
+        val nodeUrl = "https://rpc-mainnet.taker.xyz/" // 替换为您的节点地址
+        val web3j = Web3j.build(HttpService(nodeUrl))
+        // 你的私钥
+        val privateKey = user.localWallet?.privateKey // 替换为您的私钥
+        val credentials = Credentials.create(privateKey)
+        val fromAddress = credentials.address
+        // 合约地址
+        val contractAddress = "0xF929AB815E8BfB84Cdab8d1bb53F22eB1e455378"
+
+        var hash: String? = null
+
+        try {
+            hash = sendTransactionAndWait(web3j,credentials,fromAddress,contractAddress)
+        }catch (e: Exception) {
+            //重试一次
+            hash = sendTransactionAndWait(web3j,credentials,fromAddress,contractAddress)
+        }
+
+        return hash
+    }
+
+    suspend fun sendTransactionAndWait(
+        web3j: Web3j,
+        credentials: Credentials,
+        fromAddress: String,
+        contractAddress: String
+    ) : String {
+        // 构建调用函数
+        val function = Function("active", emptyList(), emptyList())
+        val dataEncoded = FunctionEncoder.encode(function)
+
+        // 估算gas
+        val estimateGas = web3j.ethEstimateGas(
+            org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(
+                fromAddress,
+                null,
+                null,
+                null,
+                contractAddress,
+                BigInteger.ZERO,
+                dataEncoded
+            )
+        ).send()
+
+        if (estimateGas.hasError()) {
+            sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.WARN,"","Error estimating gas: ${estimateGas.error.message}"))
+            return ""
+        }
+
+        val gasLimit = estimateGas.amountUsed
+
+        // 获取 nonce
+        val nonce = web3j.ethGetTransactionCount(fromAddress, DefaultBlockParameterName.PENDING)
+            .send().transactionCount
+
+        // 获取 gasPrice
+        val gasPrice = web3j.ethGasPrice().send().gasPrice
+
+        // 构造原始交易
+        val rawTransaction = RawTransaction.createTransaction(
+            nonce,
+            gasPrice,
+            gasLimit,
+            contractAddress,
+            BigInteger.ZERO,
+            dataEncoded
+        )
+
+        // 签名交易
+        val signedMessage = TransactionEncoder.signMessage(rawTransaction, 1125, credentials) // 1125为chainId
+        val hexValue = Numeric.toHexString(signedMessage)
+
+        // 发送交易
+        val ethSendTransaction: EthSendTransaction = web3j.ethSendRawTransaction(hexValue).send()
+
+        if (ethSendTransaction.hasError()) {
+            sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.WARN,"","Error sending transaction: ${ethSendTransaction.error.message}"))
+            return ""
+        }
+
+        val txHash = ethSendTransaction.transactionHash
+        sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.NORMAL,"","Transaction hash: $txHash"))
+
+        // 等待交易确认
+        val receipt = waitForTransactionReceipt(web3j, txHash)
+        if (receipt != null) {
+            sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.SUCCESS,"","Transaction confirmed in block: ${receipt.blockNumber}"))
+            return txHash
+        } else {
+            sendLog(LogData(ProjectConfig.PROJECT_ID_TAKERPROTOCOL, LogData.Level.ERROR,"","Transaction receipt not found."))
+            return ""
+        }
+    }
+
+
+    // 轮询等待交易回执（可以在协程中调用）
+    suspend fun waitForTransactionReceipt(
+        web3j: Web3j,
+        transactionHash: String,
+        timeoutSeconds: Long = 300,
+        pollIntervalSeconds: Long = 5
+    ): TransactionReceipt? {
+        val startTime = System.currentTimeMillis()
+        val timeoutMillis = timeoutSeconds * 1000
+
+        while (true) {
+            val receiptResponse: EthGetTransactionReceipt = web3j.ethGetTransactionReceipt(transactionHash).send()
+            if (receiptResponse.transactionReceipt.isPresent) {
+                return receiptResponse.transactionReceipt.get()
+                break
+            }
+            if (System.currentTimeMillis() - startTime > timeoutMillis) {
+                // 超时
+                return null
+                break
+            }
+            delay(pollIntervalSeconds * 1000) // 暂停等待
+        }
     }
 
 }

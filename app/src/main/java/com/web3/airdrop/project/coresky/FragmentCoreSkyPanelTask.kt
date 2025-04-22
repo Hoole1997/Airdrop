@@ -2,8 +2,9 @@ package com.web3.airdrop.project.coresky
 
 import androidx.fragment.app.FragmentActivity
 import com.web3.airdrop.base.IPanelTaskModule
+import com.web3.airdrop.project.coresky.data.CoreSkyUser
 
-class FragmentCoreSkyPanelTask(activity: FragmentActivity, model: CoreSkyModel?) : IPanelTaskModule<CoreSkyModel>(activity,model) {
+class FragmentCoreSkyPanelTask(activity: FragmentActivity, model: CoreSkyModel?) : IPanelTaskModule<CoreSkyModel, CoreSkyUser>(activity,model) {
 
     override fun initTask(): List<PanelTask> {
         return mutableListOf<PanelTask>().apply {
@@ -15,7 +16,7 @@ class FragmentCoreSkyPanelTask(activity: FragmentActivity, model: CoreSkyModel?)
         }
     }
 
-    override fun taskClick(panelTask: List<PanelTask>) {
+    override suspend fun taskClick(panelTask: List<PanelTask>) {
         model?.startTask(panelTask)
     }
 

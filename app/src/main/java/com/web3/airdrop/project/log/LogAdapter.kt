@@ -32,9 +32,11 @@ class LogAdapter : BaseDifferAdapter<LogData, QuickViewHolder>(object : DiffUtil
         item: LogData?
     ) {
         item?.let {
-            holder.setText(R.id.tv_project, ProjectConfig.projectName(it.projectId)+":")
+            holder.setText(R.id.tv_project, "")
             if (it.address?.isNotEmpty() == true) {
                 holder.setText(R.id.tv_account,"[${it.address}]")
+            } else {
+                holder.setText(R.id.tv_account,"")
             }
             holder.setText(R.id.tv_time, com.blankj.utilcode.util.TimeUtils.millis2String(it.time))
             holder.setText(R.id.tv_content,it.content)

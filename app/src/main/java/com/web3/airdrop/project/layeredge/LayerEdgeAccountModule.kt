@@ -30,7 +30,7 @@ class LayerEdgeAccountModule(val context: Context,val recyclerView: RecyclerView
                 oldItem: LayerEdgeAccountInfo,
                 newItem: LayerEdgeAccountInfo
             ): Boolean {
-                return oldItem.wallet == newItem.wallet
+                return oldItem.localWallet == newItem.localWallet
             }
 
             override fun areContentsTheSame(
@@ -46,11 +46,11 @@ class LayerEdgeAccountModule(val context: Context,val recyclerView: RecyclerView
         super.initItemView(data,position, itemDb)
         data?.let {
             itemDb.tvNo.text = "No.${position+1}"
-            itemDb.ethAddress.text = "${it.wallet?.address?.formatAddress()}"
+            itemDb.ethAddress.text = "${it.localWallet?.address?.formatAddress()}"
             itemDb.tvConnect.text = "连接: ${it.nodeStart}"
             itemDb.tvConnectDownTime.text = "最后同步:${if (it.lastSyncTime == 0L) 0 else TimeUtils.getFriendlyTimeSpanByNow(it.lastSyncTime) }"
             itemDb.tvCheckinDay.text = "签到:${it.dailyStreak}天"
-            itemDb.llRoot.setBackgroundResource(if (it.isRegister) R.drawable.registered_background else R.drawable.unregistered_background)
+            itemDb.llRoot.setBackgroundResource(if (it.isRegister()) R.drawable.registered_background else R.drawable.unregistered_background)
         }
     }
 }

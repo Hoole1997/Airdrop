@@ -30,7 +30,7 @@ class TakerAccountModule(val context: Context, val recyclerView: RecyclerView) :
                 oldItem: TakerUser,
                 newItem: TakerUser
             ): Boolean {
-                return oldItem.wallet == newItem.wallet
+                return oldItem.localWallet == newItem.localWallet
             }
 
             override fun areContentsTheSame(
@@ -46,7 +46,7 @@ class TakerAccountModule(val context: Context, val recyclerView: RecyclerView) :
         super.initItemView(data, position, itemDb)
         data?.let {
             itemDb.tvNo.text = "No.${position+1}"
-            itemDb.ethAddress.text = it.wallet?.address?.formatAddress()
+            itemDb.ethAddress.text = it.localWallet?.address?.formatAddress()
             itemDb.tvSyncTime.text = "SyncTime:${if (it.lastSyncTime == 0L) 0 else TimeUtils.getFriendlyTimeSpanByNow(it.lastSyncTime) }"
             itemDb.tvPoints.text = "Pts:${if (it.rewardAmount.isBlank()) 0 else BigDecimal(it.rewardAmount).toInt()}"
             itemDb.tvFollowTwitter.text = "Twitter: false"

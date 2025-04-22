@@ -4,10 +4,11 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.web3.airdrop.base.BaseUser
 import com.web3.airdrop.data.Wallet
 
 @Entity(tableName = "BlessNodeInfo", indices = [Index(value = ["address"], unique = true)])
-class BlessNodeInfo() {
+class BlessNodeInfo() : BaseUser() {
 
     // 用户社交媒体信息
     var discordConnected: Boolean = false
@@ -31,15 +32,9 @@ class BlessNodeInfo() {
     var lastPingAt: String = ""
     var isConnected: Boolean = false
 
-    var token = ""
-    var lastSyncTime: Long = 0
     @PrimaryKey
     var address = ""
 
     @Ignore
     var wallet: Wallet? = null
-
-    fun isRegister() : Boolean{
-        return token.isNotBlank()
-    }
 }

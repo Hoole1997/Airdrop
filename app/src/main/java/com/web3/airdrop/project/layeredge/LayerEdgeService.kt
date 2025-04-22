@@ -33,7 +33,7 @@ import org.json.JSONObject
 import kotlin.random.Random
 import kotlin.text.isEmpty
 
-class LayerEdgeService : BaseService<LayerEdgeModel>() {
+class LayerEdgeService : BaseService<LayerEdgeModel, LayerEdgeAccountInfo>() {
 
     companion object {
         const val CHANNEL_ID = "LayerEdge"
@@ -68,18 +68,18 @@ class LayerEdgeService : BaseService<LayerEdgeModel>() {
     private fun connectTwitter(info: LayerEdgeAccountInfo) {
         scopeNet {
             val timestamp = System.currentTimeMillis()
-            val message = "I am verifying my Twitter authentication for ${info.wallet?.address} at ${timestamp}"
-            val sign = Web3Utils.signPrefixedMessage(message,info.wallet?.privateKey)
+            val message = "I am verifying my Twitter authentication for ${info.localWallet?.address} at ${timestamp}"
+            val sign = Web3Utils.signPrefixedMessage(message,info.localWallet?.privateKey)
             Post<String>("https://referralapi.layeredge.io/api/task/connect-twitter") {
                 json(
                     "sign" to sign,
                     "timestamp" to timestamp,
-                    "walletAddress" to info.wallet?.address,
+                    "walletAddress" to info.localWallet?.address,
                     "twitterId" to "2150441227"
                 )
                 setHeaders(headers)
                 setClient {
-                    setProxy(info.wallet?.proxy)
+                    setProxy(info.localWallet?.proxy)
                 }
             }.await()
         }
@@ -298,17 +298,17 @@ class LayerEdgeService : BaseService<LayerEdgeModel>() {
 //                    LayerEdgeCommand.addLog(LogData(LayerEdgeCommand.LAYER_EDGE_PROJECT_ID, LogData.Level.NORMAL,accountInfo.wallet?.id,
 //                        "签到 ${accountInfo.wallet?.address?.formatAddress()} ${index}/${list.size}"))
                     val timestamp = System.currentTimeMillis()
-                    val message = "I am claiming my daily node point for ${accountInfo.wallet?.address} at ${timestamp}"
-                    val sign = Web3Utils.signPrefixedMessage(message,accountInfo.wallet?.privateKey)
+                    val message = "I am claiming my daily node point for ${accountInfo.localWallet?.address} at ${timestamp}"
+                    val sign = Web3Utils.signPrefixedMessage(message,accountInfo.localWallet?.privateKey)
                     val response = Post<Response>("https://referralapi.layeredge.io/api/light-node/claim-node-points") {
                         json(
                             "sign" to sign,
                             "timestamp" to timestamp,
-                            "walletAddress" to accountInfo.wallet?.address
+                            "walletAddress" to accountInfo.localWallet?.address
                         )
                         setHeaders(headers)
                         setClient {
-                            setProxy(accountInfo.wallet?.proxy)
+                            setProxy(accountInfo.localWallet?.proxy)
                         }
                         converter = LayerEdgeConvert()
                     }.await()

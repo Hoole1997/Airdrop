@@ -6,9 +6,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.blankj.utilcode.util.UiMessageUtils
 import com.web3.airdrop.base.BaseFragment
 import com.web3.airdrop.base.BaseModel
+import com.web3.airdrop.base.BaseUser
 import com.web3.airdrop.databinding.FragmentLogBinding
 
-abstract class FragmentLog<VM: BaseModel> : BaseFragment<FragmentLogBinding, VM>() {
+abstract class FragmentLog<VM: BaseModel<USER>, USER: BaseUser> : BaseFragment<FragmentLogBinding, VM>() {
 
     private lateinit var logAdapter: LogAdapter
 

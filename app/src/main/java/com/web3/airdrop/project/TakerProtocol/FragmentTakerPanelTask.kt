@@ -2,9 +2,10 @@ package com.web3.airdrop.project.TakerProtocol
 
 import androidx.fragment.app.FragmentActivity
 import com.web3.airdrop.base.IPanelTaskModule
+import com.web3.airdrop.project.TakerProtocol.data.TakerUser
 import com.web3.airdrop.project.coresky.CoreSkyModel
 
-class FragmentTakerPanelTask(activity: FragmentActivity, model: TakerModel?) : IPanelTaskModule<TakerModel>(activity,model) {
+class FragmentTakerPanelTask(activity: FragmentActivity, model: TakerModel?) : IPanelTaskModule<TakerModel, TakerUser>(activity,model) {
 
     override fun initTask(): List<PanelTask> {
         return mutableListOf<PanelTask>().apply {
@@ -20,7 +21,7 @@ class FragmentTakerPanelTask(activity: FragmentActivity, model: TakerModel?) : I
         }
     }
 
-    override fun taskClick(panelTask: List<PanelTask>) {
+    override suspend fun taskClick(panelTask: List<PanelTask>) {
         model?.startTask(panelTask)
     }
 

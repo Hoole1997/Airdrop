@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.web3.airdrop.base.BaseUser
 import com.web3.airdrop.data.Wallet
 import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 
@@ -26,12 +27,7 @@ data class CoreSkyUser(
     var telegram: String,
     var twitter: String,
     var userVerify: Int,
-    var lastSyncTime: Long = 0L
-) {
-    var token : String? = ""
-
-    @Ignore
-    var wallet: Wallet? = null
+) : BaseUser() {
 
     constructor(localWallet: Wallet) : this(
         address = localWallet.address.toString(),
@@ -50,8 +46,7 @@ data class CoreSkyUser(
         score = 0.0,
         telegram = "",
         twitter = "",
-        userVerify = 0,
-        lastSyncTime = 0L
+        userVerify = 0
     )
 
     @Ignore

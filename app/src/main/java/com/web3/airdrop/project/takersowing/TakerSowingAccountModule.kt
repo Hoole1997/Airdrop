@@ -10,7 +10,6 @@ import com.web3.airdrop.R
 import com.web3.airdrop.base.IProjectAccountModule
 import com.web3.airdrop.databinding.ItemTakerProtocolWalletBinding
 import com.web3.airdrop.extension.Extension.formatAddress
-import com.web3.airdrop.project.TakerProtocol.data.TakerUser
 import com.web3.airdrop.project.takersowing.data.TakerSowingUser
 import java.math.BigDecimal
 
@@ -31,7 +30,7 @@ class TakerSowingAccountModule(val context: Context, val recyclerView: RecyclerV
                 oldItem: TakerSowingUser,
                 newItem: TakerSowingUser
             ): Boolean {
-                return oldItem.wallet == newItem.wallet
+                return oldItem.localWallet == newItem.localWallet
             }
 
             override fun areContentsTheSame(
@@ -47,7 +46,7 @@ class TakerSowingAccountModule(val context: Context, val recyclerView: RecyclerV
         super.initItemView(data, position, itemDb)
         data?.let {
             itemDb.tvNo.text = "No.${position+1}"
-            itemDb.ethAddress.text = it.wallet?.address?.formatAddress()
+            itemDb.ethAddress.text = it.localWallet?.address?.formatAddress()
             itemDb.tvSyncTime.text = "SyncTime:${if (it.lastSyncTime == 0L) 0 else TimeUtils.getFriendlyTimeSpanByNow(it.lastSyncTime) }"
             itemDb.tvPoints.text = "Pts:${BigDecimal(it.takerPoints).toInt()}"
             itemDb.tvFollowTwitter.text = "Twitter: false"

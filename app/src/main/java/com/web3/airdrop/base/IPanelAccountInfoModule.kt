@@ -16,10 +16,10 @@ import com.web3.airdrop.databinding.FragmentBasePanelAccountBinding
 import com.web3.airdrop.databinding.ItemTaskPanelAccountinfoBinding
  import kotlin.jvm.java
 
-class IPanelAccountInfoModule<VM: BaseModel>(val activity: FragmentActivity,val model: VM?) : IPanelModule{
+class IPanelAccountInfoModule<VM: BaseModel<USER>, USER: BaseUser>(val activity: FragmentActivity, val model: VM?) : IPanelModule{
 
 
-    private var fragment: PanelAccountFragment<VM>? = null
+    private var fragment: PanelAccountFragment<VM,USER>? = null
 
     init {
         initAccountInfoView()
@@ -42,7 +42,7 @@ class IPanelAccountInfoModule<VM: BaseModel>(val activity: FragmentActivity,val 
         return "账号详情"
     }
 
-    class PanelAccountFragment<VM: BaseModel>(val viewModel: VM?) : BaseFragment<FragmentBasePanelAccountBinding, VM>() {
+    class PanelAccountFragment<VM: BaseModel<USER>, USER: BaseUser>(val viewModel: VM?) : BaseFragment<FragmentBasePanelAccountBinding, VM>() {
 
         private var adapter: BaseQuickAdapter<Pair<String, String>,DataBindingHolder<ItemTaskPanelAccountinfoBinding>>? = null
 

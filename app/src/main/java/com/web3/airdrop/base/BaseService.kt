@@ -11,10 +11,9 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
-import com.web3.airdrop.R
 import com.web3.airdrop.data.ProjectConfig
 
-abstract class BaseService<VM : BaseModel> : Service(), ViewModelStoreOwner {
+abstract class BaseService<VM : BaseModel<USER>, USER: BaseUser> : Service(), ViewModelStoreOwner {
 
     private var mViewModelStore = ViewModelStore()
 
@@ -80,6 +79,7 @@ abstract class BaseService<VM : BaseModel> : Service(), ViewModelStoreOwner {
 
     override fun onDestroy() {
         super.onDestroy()
+        modelMap.remove(initProjectInfo().projectId)
         mViewModelStore.clear()
         sendBroadcast(Intent().apply {
             setAction("destroyModel_${initProjectInfo()}")

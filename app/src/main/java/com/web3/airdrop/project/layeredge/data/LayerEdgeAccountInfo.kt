@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.web3.airdrop.base.BaseUser
 import com.web3.airdrop.data.Wallet
 
 @Entity(
@@ -35,8 +36,7 @@ data class LayerEdgeAccountInfo(
     var verifiedReferralPoints: Int,
     var startTimestamp: Long = 0L,
     @PrimaryKey var walletAddress: String,
-    var lastSyncTime: Long = 0L
-) {
+) : BaseUser(){
 
     constructor() : this(
         boostNodePoints = 0,
@@ -60,12 +60,9 @@ data class LayerEdgeAccountInfo(
         walletAddress = ""
     )
 
-    @Ignore
-    var wallet: Wallet? = null
-
-    @Ignore
-    var isRegister = false
-        get() = id.isNotEmpty()
+    override fun isRegister(): Boolean {
+        return super.isRegister() || id.isNotEmpty()
+    }
 
     @Ignore
     var nodeStart = false

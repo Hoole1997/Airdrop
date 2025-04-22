@@ -13,13 +13,11 @@ import com.web3.airdrop.data.AppDatabase
 import com.web3.airdrop.extension.Extension.formatAddress
 import com.web3.airdrop.extension.setProxy
 import com.web3.airdrop.project.bless.data.BlessNodeInfo
-import com.web3.airdrop.project.coresky.CoreSkyModel
-import com.web3.airdrop.project.coresky.data.CoreSkyUser
 import kotlinx.coroutines.launch
 import okhttp3.Headers
 import org.json.JSONObject
 
-class BlessModel : BaseModel() {
+class BlessModel : BaseModel<BlessNodeInfo>() {
 
     companion object {
         fun getHeader(token: String?, requestUrl: String = "https://bless.network/"): Headers {
@@ -49,31 +47,21 @@ class BlessModel : BaseModel() {
         }
     }
 
+    override suspend fun doTask(accountList:List<BlessNodeInfo>, panelTask: List<IPanelTaskModule.PanelTask>) {
+        accountList.forEach { nodeInfo ->
+            if (taskStart.value == false) {
+                return@forEach
+            }
+            panelTask.forEach { task ->
+                when(task.taskName) {
+                    "初始化节点" -> {
+                        initNode(nodeInfo)
+                    }
+                    else -> {
 
-    val walletAccountEvent = MutableLiveData<MutableList<BlessNodeInfo>>(mutableListOf())
-
-    override fun startTask(panelTask: List<IPanelTaskModule.PanelTask>) {
-        super.startTask(panelTask)
-
-        scopeNetLife {
-            val accountList : List<BlessNodeInfo> = if (globalMode.value == true) {
-                walletAccountEvent.value
-            } else {
-                arrayListOf<BlessNodeInfo>(panelCurrentAccountInfo.value as BlessNodeInfo)
-            } ?: arrayListOf()
-            accountList.forEach { nodeInfo ->
-                panelTask.forEach { task ->
-                    when(task.taskName) {
-                        "初始化节点" -> {
-                            initNode(nodeInfo)
-                        }
-                        else -> {
-
-                        }
                     }
                 }
             }
-
         }
 
     }
@@ -102,35 +90,7 @@ class BlessModel : BaseModel() {
         }
     }
 
-    override fun refreshPanelAccountInfo(data: Any, online: Boolean) {
-        super.refreshPanelAccountInfo(data, online)
-        if (data is BlessNodeInfo) {
-            postPanelAccount(data)
-            if (!online) return
-            requestDetail(data)
-        }
-    }
-
-    private fun postPanelAccount(data: BlessNodeInfo) {
-        panelAccountInfo.postValue(mutableListOf<Pair<String, String>>().apply {
-            val jsonString = GsonUtils.toJson(data)
-            val json = JSONObject(jsonString)
-            add(Pair("地址", data.wallet?.address?.formatAddress().toString()))
-            add(
-                Pair(
-                    "最近更新",
-                    if (data.lastSyncTime == 0L) "未同步" else TimeUtils.getFriendlyTimeSpanByNow(
-                        data.lastSyncTime
-                    )
-                )
-            )
-            json.keys().forEach {
-                add(Pair(it, json.opt(it).toString()))
-            }
-        })
-    }
-
-    private fun requestDetail(nodeInfo: BlessNodeInfo) {
+    override fun requestDetail(nodeInfo: BlessNodeInfo) {
         scopeNetLife {
             Get<String>("https://gateway-run-indexer.bls.dev/api/v1/users/socials") {
                 setClient {

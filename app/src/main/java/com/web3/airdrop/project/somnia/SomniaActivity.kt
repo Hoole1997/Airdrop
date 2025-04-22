@@ -7,7 +7,7 @@ import com.web3.airdrop.R
 import com.web3.airdrop.base.BaseActivity
 import com.web3.airdrop.databinding.ActivitySomniaBinding
 
-class SomniaActivity : BaseActivity<ActivitySomniaBinding, SomniaViewModel>() {
+class SomniaActivity : BaseActivity<ActivitySomniaBinding>() {
 
     private lateinit var accountSomniaAdapter: SomniaAdapter
 
@@ -20,13 +20,13 @@ class SomniaActivity : BaseActivity<ActivitySomniaBinding, SomniaViewModel>() {
 
         accountSomniaAdapter = SomniaAdapter()
         binding.rvAccount.adapter = accountSomniaAdapter
-        model.accountEvent.observe(this) {
-            accountSomniaAdapter.submitList(it)
-        }
-        model.loadLocalAccount()
+//        model.accountEvent.observe(this) {
+//            accountSomniaAdapter.submitList(it)
+//        }
+//        model.loadLocalAccount()
     }
 
-    override fun initViewModel(): SomniaViewModel {
+    fun initViewModel(): SomniaViewModel {
         return ViewModelProvider(this)[SomniaViewModel::class.java]
     }
 

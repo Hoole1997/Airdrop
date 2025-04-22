@@ -10,13 +10,9 @@ import com.web3.airdrop.databinding.ItemTakerProtocolWalletBinding
 import com.web3.airdrop.project.TakerProtocol.data.TakerUser
 
 
-class FragmentTakerProtocol : BaseProjectFragment<TakerModel>() {
+class FragmentTakerProtocol : BaseProjectFragment<TakerModel, TakerUser>() {
 
     var accountModule: TakerAccountModule? = null
-
-    override fun initProjectInfo(): ProjectConfig.ProjectInfo {
-        return arguments?.getSerializable("info") as ProjectConfig.ProjectInfo
-    }
 
     override fun startTaskService() {
         activity?.let {
@@ -38,17 +34,19 @@ class FragmentTakerProtocol : BaseProjectFragment<TakerModel>() {
         super.initView(activity)
 
         loadTaskPanelModule(
-            accountInfoModule = IPanelAccountInfoModule<TakerModel>(activity,model),
+            accountInfoModule = IPanelAccountInfoModule<TakerModel, TakerUser>(activity,model),
             taskModule = FragmentTakerPanelTask(activity,model)
         )
 
         accountModule = TakerAccountModule(activity,binding.rvAccount).apply {
-            loadItemAccountModule<TakerUser, ItemTakerProtocolWalletBinding>(this)
+            loadItemAccountModule<ItemTakerProtocolWalletBinding>(this)
         }
         model?.walletAccountEvent?.observe(this) {
             accountModule?.refreshData(it)
         }
-        model?.refreshLocalWallet()
+        model?.refreshLocalWallet(creator = {
+            TakerUser(it)
+        })
     }
 
 }

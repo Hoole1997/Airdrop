@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.web3.airdrop.base.BaseUser
 import com.web3.airdrop.data.Wallet
-import com.web3.airdrop.project.TakerProtocol.data.TakerUser
 
 @Entity(tableName = "TakerSowingUser", indices = [Index(value = ["walletAddress"], unique = true)])
 data class TakerSowingUser(
@@ -18,15 +18,13 @@ data class TakerSowingUser(
     val rewardCount:Int,
     val discordBindStatus: Boolean,
     val tgBindStatus: Boolean,
-    val firstSign: Boolean,
+    var firstSign: Boolean,
     val bindingBtcWallet: Boolean,
     val xbindStatus: Boolean
-) {
-    var token: String? = ""
-    var lastSyncTime: Long = 0L
+): BaseUser() {
 
     @Ignore
-    var wallet: Wallet? = null
+    var canSign: Boolean = false
 
     constructor(localWallet: Wallet) : this(
         id = 0L,
@@ -44,18 +42,8 @@ data class TakerSowingUser(
     )
 
     @Ignore
-    fun isLogin(): Boolean {
-        return !(token?.isEmpty() == true || ((System.currentTimeMillis() - lastSyncTime) > 1000 * 60 * 60 * 24) && lastSyncTime != 0L)
-    }
-
-    @Ignore
-    fun isRegister() : Boolean{
-        return token?.isNotBlank() == true
-    }
-
-    @Ignore
     fun getNewUser(user: TakerSowingUser) : TakerSowingUser {
-        user.wallet = wallet
+        user.localWallet = localWallet
         user.token = token
         user.lastSyncTime = System.currentTimeMillis()
         return user

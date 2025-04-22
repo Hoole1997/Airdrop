@@ -5,8 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.web3.airdrop.base.BaseService
 import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.project.ActivityProject
+import com.web3.airdrop.project.takersowing.data.TakerSowingUser
 
-class TakerSowingService : BaseService<TakerSowingModel>() {
+class TakerSowingService : BaseService<TakerSowingModel, TakerSowingUser>() {
     override fun initProjectInfo(): ProjectConfig.ProjectInfo {
         return ProjectConfig.projectData().first {
             it.projectId == ProjectConfig.PROJECT_ID_TAKERPROTOCOL_SOWING

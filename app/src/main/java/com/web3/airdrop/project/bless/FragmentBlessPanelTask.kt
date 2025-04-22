@@ -2,9 +2,10 @@ package com.web3.airdrop.project.bless
 
 import androidx.fragment.app.FragmentActivity
 import com.web3.airdrop.base.IPanelTaskModule
+import com.web3.airdrop.project.bless.data.BlessNodeInfo
 import com.web3.airdrop.project.coresky.CoreSkyModel
 
-class FragmentBlessPanelTask(activity: FragmentActivity, model: BlessModel?) : IPanelTaskModule<BlessModel>(activity,model) {
+class FragmentBlessPanelTask(activity: FragmentActivity, model: BlessModel?) : IPanelTaskModule<BlessModel, BlessNodeInfo>(activity,model) {
 
     override fun initTask(): List<PanelTask> {
         return mutableListOf<PanelTask>().apply {
@@ -12,7 +13,7 @@ class FragmentBlessPanelTask(activity: FragmentActivity, model: BlessModel?) : I
         }
     }
 
-    override fun taskClick(panelTask: List<PanelTask>) {
+    override suspend fun taskClick(panelTask: List<PanelTask>) {
         model?.startTask(panelTask)
     }
 

@@ -2,23 +2,15 @@ package com.web3.airdrop.project.layeredge
 
 import android.content.Intent
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.ViewModelProvider
-import com.blankj.utilcode.util.LogUtils
 import com.web3.airdrop.base.BaseProjectFragment
 import com.web3.airdrop.base.IPanelAccountInfoModule
 import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.databinding.ItemLayeredgeWalletBinding
 import com.web3.airdrop.project.layeredge.data.LayerEdgeAccountInfo
 
-class FragmentLayerEdge : BaseProjectFragment<LayerEdgeModel>() {
+class FragmentLayerEdge : BaseProjectFragment<LayerEdgeModel, LayerEdgeAccountInfo>() {
 
-    lateinit var info: ProjectConfig.ProjectInfo
     var accountModule: LayerEdgeAccountModule? = null
-
-    override fun initProjectInfo(): ProjectConfig.ProjectInfo {
-        info = arguments?.getSerializable("info") as ProjectConfig.ProjectInfo
-        return info
-    }
 
     override fun startTaskService() {
         activity?.let {
@@ -36,17 +28,19 @@ class FragmentLayerEdge : BaseProjectFragment<LayerEdgeModel>() {
         super.initView(activity)
 
         accountModule = LayerEdgeAccountModule(activity,binding.rvAccount).apply {
-            loadItemAccountModule<LayerEdgeAccountInfo,ItemLayeredgeWalletBinding>(this)
+            loadItemAccountModule<ItemLayeredgeWalletBinding>(this)
         }
         loadTaskPanelModule(
-            accountInfoModule = IPanelAccountInfoModule<LayerEdgeModel>(activity,model),
+            accountInfoModule = IPanelAccountInfoModule<LayerEdgeModel, LayerEdgeAccountInfo>(activity,model),
             taskModule = null
         )
 
         model?.walletAccountEvent?.observe(this) {
             accountModule?.refreshData(it)
         }
-        model?.refreshLocalWallet()
+        model?.refreshLocalWallet(creator = {
+            LayerEdgeAccountInfo()
+        })
     }
 
 }

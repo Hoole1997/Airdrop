@@ -11,13 +11,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_clear"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_margin="10dp"
+            android:text="清空日志"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_log"
-            app:layout_constraintTop_toTopOf="parent"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintTop_toBottomOf="@id/btn_clear"
             android:orientation="vertical"
             tools:itemCount="10"
             tools:listitem="@layout/item_log"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

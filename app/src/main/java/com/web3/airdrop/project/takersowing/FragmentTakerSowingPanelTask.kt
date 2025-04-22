@@ -4,8 +4,9 @@ import androidx.fragment.app.FragmentActivity
 import com.web3.airdrop.base.IPanelTaskModule
 import com.web3.airdrop.project.TakerProtocol.TakerModel
 import com.web3.airdrop.project.coresky.CoreSkyModel
+import com.web3.airdrop.project.takersowing.data.TakerSowingUser
 
-class FragmentTakerSowingPanelTask(activity: FragmentActivity, model: TakerSowingModel?) : IPanelTaskModule<TakerSowingModel>(activity,model) {
+class FragmentTakerSowingPanelTask(activity: FragmentActivity, model: TakerSowingModel?) : IPanelTaskModule<TakerSowingModel, TakerSowingUser>(activity,model) {
 
     override fun initTask(): List<PanelTask> {
         return mutableListOf<PanelTask>().apply {
@@ -15,7 +16,7 @@ class FragmentTakerSowingPanelTask(activity: FragmentActivity, model: TakerSowin
         }
     }
 
-    override fun taskClick(panelTask: List<PanelTask>) {
+    override suspend fun taskClick(panelTask: List<PanelTask>) {
         model?.startTask(panelTask)
     }
 

@@ -5,8 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import com.web3.airdrop.base.BaseService
 import com.web3.airdrop.data.ProjectConfig
 import com.web3.airdrop.project.ActivityProject
+import com.web3.airdrop.project.TakerProtocol.data.TakerUser
 
-class TakerProtocolService : BaseService<TakerModel>() {
+class TakerProtocolService : BaseService<TakerModel, TakerUser>() {
     override fun initProjectInfo(): ProjectConfig.ProjectInfo {
         return ProjectConfig.projectData().first {
             it.projectId == ProjectConfig.PROJECT_ID_TAKERPROTOCOL
