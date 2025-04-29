@@ -37,7 +37,7 @@ class LayerEdgeModel : BaseModel<LayerEdgeAccountInfo>() {
         .build()
 
     override suspend fun getAccountByAddress(address: String): LayerEdgeAccountInfo? {
-        return AppDatabase.getDatabase().layeredgeDao().getAccountByAddress(address)[0]
+        return AppDatabase.getDatabase().layeredgeDao().getAccountByAddress(address)
     }
 
     override fun requestDetail(info: LayerEdgeAccountInfo) {

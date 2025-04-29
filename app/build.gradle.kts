@@ -84,7 +84,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
 
-//    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
+    implementation("androidx.work:work-runtime-ktx:2.7.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")

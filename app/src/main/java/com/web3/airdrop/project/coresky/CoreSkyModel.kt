@@ -69,7 +69,7 @@ class CoreSkyModel : BaseModel<CoreSkyUser>() {
     }
 
     override suspend fun getAccountByAddress(address: String): CoreSkyUser? {
-        return AppDatabase.getDatabase().coreSkyDao().getAccountByAddress(address)
+        return AppDatabase.getDatabase().coreSkyDao().getAccountByAddress(address.lowercase())
     }
 
     private suspend fun apiLogin(user: CoreSkyUser): LoginResult? {
@@ -279,7 +279,7 @@ class CoreSkyModel : BaseModel<CoreSkyUser>() {
                             apiVote(account)
                         }
                     }
-                    val delayTime = Random.nextLong(5000, 15000)
+                    val delayTime = Random.nextLong(2000, 5000)
 
                     if (index == panelTask.size-1) {
                         delay(1000)

@@ -20,6 +20,6 @@ interface LayerEdgeAccountDao {
     fun getAccountList() : LiveData<List<LayerEdgeAccountInfo>>
 
     @Query("SELECT * FROM LayerEdgeAccountInfo WHERE walletAddress = :walletAddress")
-    suspend fun getAccountByAddress(walletAddress: String): List<LayerEdgeAccountInfo>
+    suspend fun getAccountByAddress(walletAddress: String): LayerEdgeAccountInfo?
 
 }

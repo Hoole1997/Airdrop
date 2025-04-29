@@ -12,17 +12,24 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.Data
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
 import com.blankj.utilcode.util.ActivityUtils
 import com.blankj.utilcode.util.GsonUtils
 import com.blankj.utilcode.util.SPUtils
+import com.blankj.utilcode.util.ToastUtils
 import com.chad.library.adapter4.BaseQuickAdapter
 import com.chad.library.adapter4.viewholder.DataBindingHolder
 import com.web3.airdrop.R
 import com.web3.airdrop.data.TaskConfig
 import com.web3.airdrop.databinding.FragmentBasePanelTaskBinding
 import com.web3.airdrop.databinding.ItemTaskPanelTaskBinding
+import com.web3.airdrop.project.log.LogData
+import com.web3.airdrop.project.takersowing.TakerSowingTimingWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activity: FragmentActivity, val model: VM?) : IPanelModule{
 
@@ -37,13 +44,16 @@ abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activit
             }
             addModeListener(
                 globalModeListener = {
-                    this@IPanelTaskModule.model?.globalMode?.value = it
+                    this@IPanelTaskModule.model?.globalMode?.setValue(it)
                 },
                 onRandomModeListener = {
 //                    this@IPanelTaskModule.model?.randomMode?.value = it
                 },
                 onCombinationModeListener = {
 //                    this@IPanelTaskModule.model?.combinationMode?.value = it
+                },
+                onTimingEnableListener = { enable,config ->
+                    initTaskTimingWorker(enable,config)
                 }
             )
         }
@@ -56,6 +66,8 @@ abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activit
     abstract fun initTask(): List<PanelTask>
 
     abstract suspend fun taskClick(panelTask: List<PanelTask>)
+
+    abstract fun initTaskTimingWorker(enable: Boolean,config: TaskConfig)
 
     data class PanelTask(
         val taskName: String,
@@ -72,6 +84,7 @@ abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activit
         private var onGlobalModeListener: ((global: Boolean) -> Unit)? = null
         private var onRandomModeListener: ((random: Boolean) -> Unit)? = null
         private var onCombinationModeListener: ((combination: Boolean) -> Unit)? = null
+        private var onTimingListener: ((timingEnable: Boolean,taskConfig: TaskConfig) -> Unit)? = null
 
         //组合模式，勾选任务
         var combinationMode = true
@@ -90,12 +103,15 @@ abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activit
                 val startState = model?.taskStart?.value ?:false
                 model?.taskStart?.setValue(!startState)
                 if (!startState) {
-                    var list = adapter?.items?.filter {
+                    //开启
+                    adapter?.items?.filter {
                         it.check
-                    }?.toList()
-                    list?.let {
+                    }?.let {
                         onTaskStartListener?.invoke(true,it)
                     }
+                } else {
+                    //关闭
+
                 }
             }
             model?.taskInfo?.observe(this) {
@@ -109,25 +125,37 @@ abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activit
                 setTaskConfig()
             }
             binding.switchTiming.setOnCheckedChangeListener { _,check ->
-                setTaskConfig()
+                if (binding.etTaskTiming.text.isNullOrBlank()|| binding.etTaskTiming.text.toString().toLong() <= 0L) {
+                    ToastUtils.showShort("时间不能小于0")
+                    binding.switchTiming.isChecked = false
+                    return@setOnCheckedChangeListener
+                }
+                setTaskConfig()?.let {
+                    onTimingListener?.invoke(check,it)
+                }
             }
             binding.etTaskTiming.doAfterTextChanged {
-                if (it.isNullOrBlank())return@doAfterTextChanged
+                if (it.isNullOrBlank() || it.toString().toLong() <= 0L) {
+                    ToastUtils.showShort("时间不能小于0")
+                    return@doAfterTextChanged
+                }
                 setTaskConfig()
             }
         }
 
-        private fun setTaskConfig() {
+        private fun setTaskConfig(): TaskConfig?{
+            val projectInfo = model?.taskInfo?.value ?: return null
+            val config = TaskConfig(
+                globalMode = binding.switchAll.isChecked,
+                timingMode = binding.switchTiming.isChecked,
+                binding.etTaskTiming.text.toString().toLong(),
+                adapter?.items
+            )
+            SPUtils.getInstance(projectInfo.projectId.toString()).put("TaskConfig",GsonUtils.toJson(config))
             lifecycleScope.launch(Dispatchers.IO) {
-                val projectInfo = model?.taskInfo?.value ?: return@launch
-                val config = TaskConfig(
-                    globalMode = binding.switchAll.isChecked,
-                    timingMode = binding.switchTiming.isChecked,
-                    binding.etTaskTiming.text.toString().toInt(),
-                    adapter?.items
-                )
-                SPUtils.getInstance(projectInfo.projectId.toString()).put("TaskConfig",GsonUtils.toJson(config))
+                model?.sendLog(LogData(projectInfo.projectId, LogData.Level.NORMAL,"","保存定时参数 \n ${GsonUtils.toJson(config)}"))
             }
+            return config
         }
 
         private fun setAdapter() {
@@ -176,7 +204,7 @@ abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activit
                     binding.switchAll.isChecked = config.globalMode
                     binding.switchTiming.isChecked = config.timingMode
                     binding.etTaskTiming.setText(config.timing.toString())
-                    model?.globalMode?.value = config.globalMode
+                    model?.globalMode?.setValue(config.globalMode)
                 }
             }
         }
@@ -185,10 +213,14 @@ abstract class IPanelTaskModule<VM: BaseModel<USER>, USER: BaseUser>(val activit
             onTaskStartListener = taskStartListener
         }
 
-        fun addModeListener(globalModeListener : (Boolean) -> Unit,onRandomModeListener : (Boolean) -> Unit,onCombinationModeListener : (Boolean) -> Unit) {
+        fun addModeListener(globalModeListener : (Boolean) -> Unit,
+                            onRandomModeListener : (Boolean) -> Unit,
+                            onCombinationModeListener : (Boolean) -> Unit,
+                            onTimingEnableListener : (Boolean, TaskConfig) -> Unit) {
             this.onGlobalModeListener = globalModeListener
             this.onRandomModeListener = onRandomModeListener
             this.onCombinationModeListener = onCombinationModeListener
+            this.onTimingListener = onTimingEnableListener
         }
     }
 

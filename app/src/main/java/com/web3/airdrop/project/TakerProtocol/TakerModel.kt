@@ -81,7 +81,7 @@ class TakerModel : BaseModel<TakerUser>() {
     }
 
     override suspend fun getAccountByAddress(address: String): TakerUser? {
-        return AppDatabase.getDatabase().takerDao().getAccountByAddress(address)
+        return AppDatabase.getDatabase().takerDao().getAccountByAddress(address.lowercase())
     }
 
     private suspend fun apiLogin(user: TakerUser): String? {

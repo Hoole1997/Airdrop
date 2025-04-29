@@ -4,6 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.scopeNetLife
 import androidx.lifecycle.viewModelScope
 import com.blankj.utilcode.util.GsonUtils
+import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.TimeUtils
 import com.drake.net.Net
 import com.web3.airdrop.base.BaseModel
@@ -87,6 +88,7 @@ class TakerSowingModel : BaseModel<TakerSowingUser>() {
     }
 
     override suspend fun doTask(accountList:List<TakerSowingUser>, panelTask: List<IPanelTaskModule.PanelTask>) {
+        LogUtils.d("doTask")
         accountList.forEachIndexed {index, account ->
             if (taskStart.value == false) {
                 return@forEachIndexed
@@ -256,8 +258,8 @@ class TakerSowingModel : BaseModel<TakerSowingUser>() {
                 setProxy(user.localWallet?.proxy)
             }
             setHeaders(getHeader(user.token, "https://sowing.taker.xyz/",verifyToken))
-        }).toResult<String>().apply {
-            JSONObject(getOrNull()).apply {
+        }).toResult<String>().getOrNull()?.apply {
+            JSONObject(this).apply {
 //                if (optInt("code") == 200) {
 //
 //                } else {

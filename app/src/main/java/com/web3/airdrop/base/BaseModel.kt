@@ -4,6 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.blankj.utilcode.util.GsonUtils
+import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.TimeUtils
 import com.web3.airdrop.data.AppDatabase
 import com.web3.airdrop.data.ProjectConfig
@@ -48,11 +49,13 @@ open class BaseModel<USER: BaseUser> : ViewModel(), IModel<USER> {
     }
 
     override suspend fun startTask(panelTask: List<IPanelTaskModule.PanelTask>) {
+        LogUtils.d("startTask globalMode=${globalMode.value}")
         val accountList : List<USER> = if (globalMode.value == true) {
             walletAccountEvent.value
         } else {
             if (panelCurrentAccountInfo.value == null) null else arrayListOf<USER>(panelCurrentAccountInfo.value as USER)
         } ?: arrayListOf()
+        LogUtils.d("startTask ${accountList.size}")
         doTask(accountList.shuffled(),panelTask)
         taskStart.postValue(false)
     }
@@ -104,7 +107,7 @@ open class BaseModel<USER: BaseUser> : ViewModel(), IModel<USER> {
     }
 
     fun refreshLocalWallet(creator: (Wallet) -> USER) {
-        viewModelScope.launch() {
+        viewModelScope.launch(Dispatchers.IO) {
             val ethWallet = AppDatabase.getDatabase().walletDao().getWalletsByChain("ETH")
             val list = mutableListOf<USER>()
             ethWallet.forEach { localInfo ->
