@@ -36,6 +36,7 @@
         <service android:name=".project.TakerProtocol.TakerProtocolService" android:foregroundServiceType="dataSync"/>
         <service android:name=".project.bless.BlessService" android:foregroundServiceType="dataSync"/>
         <service android:name=".project.takersowing.TakerSowingService" android:foregroundServiceType="dataSync"/>
+        <service android:name=".project.chainopera.ChainOperaService" android:foregroundServiceType="dataSync"/>
     </application>
 
 </manifest>

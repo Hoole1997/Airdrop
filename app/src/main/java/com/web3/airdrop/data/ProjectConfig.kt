@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import com.web3.airdrop.R
 import com.web3.airdrop.project.TakerProtocol.FragmentTakerProtocol
 import com.web3.airdrop.project.bless.FragmentBless
+import com.web3.airdrop.project.chainopera.FragmentChainOpera
 import com.web3.airdrop.project.coresky.FragmentCoreSky
 import com.web3.airdrop.project.layeredge.FragmentLayerEdge
 import com.web3.airdrop.project.takersowing.FragmentTakerSowing
@@ -19,6 +20,7 @@ class ProjectConfig {
         const val PROJECT_ID_TAKERPROTOCOL = 3
         const val PROJECT_ID_BLESS = 4
         const val PROJECT_ID_TAKERPROTOCOL_SOWING = 5
+        const val PROJECT_ID_CHAINOPERA_AI = 6
 
         fun projectData(): List<ProjectInfo> {
             return mutableListOf<ProjectInfo>(
@@ -71,6 +73,16 @@ class ProjectConfig {
                     describe = "TakerSowing | 🔥0撸项目，签到类\n" +
                             "一共获得2次融资，已披露是300万种子轮融资，第二次融资金额未披露，由Electric Capital，DCG 领投，Dradonfly,Spartan Group 等众多VC参投",
                     star = 4
+                ),
+                ProjectInfo(
+                    projectId = PROJECT_ID_CHAINOPERA_AI,
+                    name = "ChainOpera AI",
+                    icon = R.mipmap.icon_chain_opera_ai,
+                    twitterUrl = "https://x.com/ChainOpera_AI",
+                    website = "https://chainopera.ai/",
+                    describe = "CHainOpera AI | 0撸签到 \n"+
+                    "ChainOpera AI 提供 L1 区块链和协议，用于共同拥有和共同创建去中心化的 AI APP 和 Agent ，由 Federated AI 操作系统和平台提供支持。",
+                    star = 4
                 )
             )
         }
@@ -108,6 +120,9 @@ class ProjectConfig {
                 }
                 PROJECT_ID_TAKERPROTOCOL_SOWING -> {
                     FragmentTakerSowing()
+                }
+                PROJECT_ID_CHAINOPERA_AI -> {
+                    FragmentChainOpera()
                 }
                 else -> null
             }.apply {
